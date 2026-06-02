@@ -1,0 +1,6 @@
+{
+  "name": "WA Fort Cobranças",
+  "description": "Sistema de cobrança semi-automático para a WA Fort. Gerencie inadimplentes, gere mensagens personalizadas via inteligência artificial e envie diretamente pelo WhatsApp Web de forma ágil.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

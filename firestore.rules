@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net (Rule 1)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Strict validation schemas
+    function isValidDebtor(data) {
+      return data.name is string && data.name.size() <= 150
+          && data.phone is string && data.phone.size() <= 30
+          && data.amount is number && data.amount >= 0
+          && data.dueDate is string && data.dueDate.size() <= 20
+          && data.daysOverdue is number
+          && data.description is string && data.description.size() <= 500
+          && data.status in ['pending', 'notified', 'negotiating', 'paid']
+          && data.tone in ['friendly', 'formal', 'urgent', 'negotiation']
+          && (!data.keys().hasAll(['customMessage']) || data.customMessage is string && data.customMessage.size() <= 5000);
+    }
+
+    function isValidConfig(data) {
+      return data.companyName is string && data.companyName.size() <= 100
+          && data.customSignature is string && data.customSignature.size() <= 500
+          && data.paymentMethods is string && data.paymentMethods.size() <= 500
+          && (!data.keys().hasAll(['pixKey']) || data.pixKey is string && data.pixKey.size() <= 150)
+          && (!data.keys().hasAll(['securityPin']) || data.securityPin is string && data.securityPin.size() <= 12);
+    }
+
+    // Secure multi-tenant user root
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // Debtors subcollection
+      match /debtors/{debtorId} {
+        allow read: if isOwner(userId);
+        
+        allow create: if isOwner(userId) 
+                      && isValidId(debtorId)
+                      && isValidDebtor(request.resource.data)
+                      && request.resource.data.keys().hasAll(['name', 'phone', 'amount', 'dueDate', 'daysOverdue', 'description', 'status', 'tone']);
+                      
+        allow update: if isOwner(userId) 
+                      && isValidId(debtorId)
+                      && isValidDebtor(request.resource.data);
+                      
+        allow delete: if isOwner(userId);
+      }
+
+      // Workstation Config subcollection
+      match /config/{configId} {
+        allow read: if isOwner(userId);
+        
+        allow create, update: if isOwner(userId)
+                              && isValidId(configId)
+                              && isValidConfig(request.resource.data);
+                              
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

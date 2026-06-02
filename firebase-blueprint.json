@@ -1,0 +1,44 @@
+{
+  "entities": {
+    "Debtor": {
+      "title": "Debtor",
+      "description": "Cadastro de cliente inadimplente restrito ao operador",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nome completo do devedor" },
+        "phone": { "type": "string", "description": "Dígitos numéricos do WhatsApp com DDD" },
+        "amount": { "type": "number", "description": "Valor total atualizado da cobrança" },
+        "dueDate": { "type": "string", "description": "Data de vencimento original da cobrança" },
+        "daysOverdue": { "type": "number", "description": "Dias decorridos após o vencimento" },
+        "description": { "type": "string", "description": "Descrição do serviço ou produto inadimplente" },
+        "status": { "type": "string", "enum": ["pending", "notified", "negotiating", "paid"], "description": "Status operacional da cobrança" },
+        "customMessage": { "type": "string", "description": "Mensagem sob medida pré-gerada pela IA" },
+        "tone": { "type": "string", "enum": ["friendly", "formal", "urgent", "negotiation"], "description": "Régua/tom em uso" }
+      },
+      "required": ["name", "phone", "amount", "dueDate", "daysOverdue", "description", "status", "tone"]
+    },
+    "Config": {
+      "title": "Config",
+      "description": "Configurações do terminal de cobrança wa-fort",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string", "description": "Nome fantasia de exibição no rodapé" },
+        "customSignature": { "type": "string", "description": "Assinatura inserida ao fim do WhatsApp" },
+        "paymentMethods": { "type": "string", "description": "Linha com as formas de pagamento disponíveis" },
+        "pixKey": { "type": "string", "description": "Chave para recebimento instantâneo" },
+        "securityPin": { "type": "string", "description": "PIN de destravamento do painel" }
+      },
+      "required": ["companyName", "customSignature", "paymentMethods"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/debtors/{debtorId}": {
+      "schema": "Debtor",
+      "description": "Coleção contendo todos os devedores individuais monitorados pelo usuário"
+    },
+    "/users/{userId}/config/main": {
+      "schema": "Config",
+      "description": "Documento específico contendo as configurações de régua e segurança do operador"
+    }
+  }
+}
