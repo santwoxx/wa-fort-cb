@@ -364,19 +364,19 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
   const stats = getStats();
 
   return (
-    <div className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto antialiased">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-6xl w-full flex flex-col my-8 outline-hidden">
+    <div className="fixed inset-0 bg-slate-100/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-xl border border-slate-200 max-w-6xl w-full flex flex-col my-8">
         
         {/* HEADER */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[#C5A021] shrink-0">
-              <FileText className="w-6 h-6" />
+            <div className="p-2.5 rounded-xl bg-brand-blue/5 border border-brand-blue/10 shrink-0">
+              <FileText className="w-6 h-6 text-brand-blue" />
             </div>
             <div>
-              <h3 className="font-bold text-lg font-display text-[#1E3A8A] flex items-center gap-2">
+              <h3 className="font-bold text-lg font-display text-brand-blue flex items-center gap-2">
                 Controle de Duplicatas & Cobranças
-                <span className="text-[10px] bg-amber-600 font-bold px-1.5 py-0.5 rounded text-white tracking-widest uppercase">
+                <span className="text-[10px] bg-emerald-600 font-bold px-1.5 py-0.5 rounded text-white tracking-widest uppercase">
                   Boleto & Pix Ready
                 </span>
               </h3>
@@ -393,13 +393,13 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
         </div>
 
         {/* TABS SELECTOR */}
-        <div className="px-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+        <div className="px-6 border-b border-slate-100 bg-white flex items-center justify-between">
           <div className="flex space-x-6">
             <button
               onClick={() => setActiveTab('gestao')}
               className={`py-3.5 text-xs font-bold border-b-2 transition cursor-pointer ${
                 activeTab === 'gestao' 
-                  ? 'border-[#C5A021] text-[#C5A021] font-black' 
+                  ? 'border-brand-blue text-brand-blue' 
                   : 'border-transparent text-slate-400 hover:text-slate-600'
               }`}
             >
@@ -409,7 +409,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
               onClick={() => setActiveTab('auditoria')}
               className={`py-3.5 text-xs font-bold border-b-2 transition cursor-pointer ${
                 activeTab === 'auditoria' 
-                  ? 'border-[#C5A021] text-[#C5A021] font-black' 
+                  ? 'border-brand-blue text-brand-blue' 
                   : 'border-transparent text-slate-400 hover:text-slate-600'
               }`}
             >
@@ -433,7 +433,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
           {/* DASHBOARD STATS WIDGETS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             
-            <div className="bg-[#1E3A8A]/5 border border-[#1E3A8A]/10 rounded-2xl p-4 flex items-center justify-between">
+            <div className="bg-brand-blue/5 border border-brand-blue/10 rounded-2xl p-4 flex items-center justify-between">
               <div>
                 <span className="block text-[10px] font-black uppercase text-blue-650 tracking-wider">Total Emitido</span>
                 <span className="text-lg font-bold font-display text-slate-900 leading-tight">
@@ -441,7 +441,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                 </span>
                 <span className="block text-[9px] text-slate-450 mt-0.5">Emissão ativa total</span>
               </div>
-              <div className="p-2 rounded-xl bg-blue-105 text-[#1E3A8A]">
+              <div className="p-2 rounded-xl bg-blue-105 text-brand-blue">
                 <Layers className="w-4 h-4" />
               </div>
             </div>
@@ -505,7 +505,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
               
               {/* LEFT COLUMN: launch/edit form */}
               <div id="duplicata-form" className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-                <h4 className="font-bold text-xs text-[#1E3A8A] flex items-center gap-1.5 uppercase tracking-wider">
+                <h4 className="font-bold text-xs text-brand-blue flex items-center gap-1.5 uppercase tracking-wider">
                   {editingId ? <Edit className="w-4 h-4 text-amber-600 animate-pulse" /> : <Plus className="w-4 h-4 text-amber-600" />} 
                   {editingId ? `Editar Duplicata #${formNumeroDuplicata}` : "Criar Nova Duplicata"}
                 </h4>
@@ -523,7 +523,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                         placeholder="Ex: Carlos Silva Santos"
                         value={formClienteNome}
                         onChange={(e) => setFormClienteNome(e.target.value)}
-                        className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-[#C5A021]"
+                        className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-brand-blue"
                       />
                     </div>
 
@@ -538,7 +538,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                           placeholder="000.000.000-00"
                           value={formClienteDocumento}
                           onChange={(e) => setFormClienteDocumento(e.target.value)}
-                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-[#C5A021]"
+                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-brand-blue"
                         />
                       </div>
                       <div>
@@ -551,7 +551,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                           placeholder="DUP-1001"
                           value={formNumeroDuplicata}
                           onChange={(e) => setFormNumeroDuplicata(e.target.value)}
-                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-[#C5A021]"
+                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-brand-blue"
                         />
                       </div>
                     </div>
@@ -568,7 +568,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                           placeholder="Ex: 350.00"
                           value={formValor}
                           onChange={(e) => setFormValor(e.target.value)}
-                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-[#C5A021]"
+                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-brand-blue"
                         />
                       </div>
                       <div>
@@ -580,7 +580,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                           required
                           value={formVencimento}
                           onChange={(e) => setFormVencimento(e.target.value)}
-                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-[#C5A021] font-mono"
+                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-brand-blue font-mono"
                         />
                       </div>
                     </div>
@@ -594,7 +594,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                         placeholder="Ex: Mensalidade Conectividade Premium"
                         value={formDescricao}
                         onChange={(e) => setFormDescricao(e.target.value)}
-                        className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-[#C5A021]"
+                        className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-brand-blue"
                       />
                     </div>
 
@@ -607,7 +607,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                         placeholder="Observações de cobrança ou restrições"
                         value={formObservacoes}
                         onChange={(e) => setFormObservacoes(e.target.value)}
-                        className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-[#C5A021] resize-none"
+                        className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-brand-blue resize-none"
                       />
                     </div>
 
@@ -619,7 +619,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                         <select
                           value={formStatus}
                           onChange={(e) => setFormStatus(e.target.value as any)}
-                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-[#C5A021]"
+                          className="w-full bg-white border border-slate-250 text-slate-800 text-xs rounded-xl p-2.5 outline-none focus:border-brand-blue"
                         >
                           <option value="Pendente">Pendente</option>
                           <option value="Pago">Pago</option>
@@ -643,7 +643,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                       <button
                         type="submit"
                         disabled={isSubmitLoading}
-                        className={`flex-1 py-3 text-xs font-black rounded-xl text-white transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50 bg-[#C5A021] hover:bg-[#b08e1a]`}
+                        className={`flex-1 py-3 text-xs font-black rounded-xl text-white transition flex items-center justify-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50 bg-brand-blue hover:bg-blue-900`}
                       >
                         <Plus className="w-4 h-4 shrink-0" />
                         {isSubmitLoading ? "Gravando..." : editingId ? "Salvar Alterações" : "Gravar Duplicata"}
@@ -659,8 +659,8 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                   </div>
                 )}
 
-                <div className="p-3 bg-blue-50 border border-blue-150 text-[10px] text-[#1E3A8A] rounded-xl flex items-start gap-2 leading-relaxed">
-                  <Info className="w-4 h-4 text-[#1E3A8A] shrink-0 mt-0.5" />
+                <div className="p-3 bg-blue-50 border border-blue-150 text-[10px] text-brand-blue rounded-xl flex items-start gap-2 leading-relaxed">
+                  <Info className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold">Emissão Segura Enforced</span>
                     <p className="mt-0.5 text-slate-600">Por segurança, nenhuma duplicata comercial pode ser gravada sem passar pela API backend, garantindo logs de conciliação e dados de auditoria.</p>
@@ -686,7 +686,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                         placeholder="Nome..."
                         value={filterCliente}
                         onChange={(e) => setFilterCliente(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-[#C5A021]"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-brand-blue"
                       />
                     </div>
                     <div>
@@ -696,7 +696,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                         placeholder="Documento..."
                         value={filterDocumento}
                         onChange={(e) => setFilterDocumento(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-[#C5A021]"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-brand-blue"
                       />
                     </div>
                     <div>
@@ -705,7 +705,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                         type="date"
                         value={filterVencimento}
                         onChange={(e) => setFilterVencimento(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px] font-mono outline-none focus:border-[#C5A021]"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px] font-mono outline-none focus:border-brand-blue"
                       />
                     </div>
                     <div>
@@ -713,7 +713,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                       <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-[#C5A021]"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px] outline-none focus:border-brand-blue"
                       >
                         <option value="todos">Todos</option>
                         <option value="Pendente">Pendentes</option>
@@ -734,7 +734,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                           setFilterVencimento('');
                           setFilterStatus('todos');
                         }}
-                        className="text-[9px] text-[#C5A021] font-bold hover:underline"
+                        className="text-[9px] text-brand-blue font-bold hover:underline"
                       >
                         Limpar Filtros
                       </button>
@@ -748,7 +748,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                     <span className="text-xs font-bold text-slate-700">Duplicatas Registradas ({duplicatas.length})</span>
                     <button
                       onClick={handleExportCSV}
-                      className="text-[10px] bg-slate-900 hover:bg-slate-950 text-white px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-bold transition cursor-pointer"
+                      className="text-[10px] bg-brand-blue hover:bg-blue-900 text-white px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-bold transition cursor-pointer"
                     >
                       <FileSpreadsheet className="w-3.5 h-3.5" />
                       Exportar Lista (.CSV)
@@ -771,7 +771,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                           {isLoading ? (
                             <tr>
                               <td colSpan={5} className="p-8 text-center text-slate-400">
-                                <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#C5A021] mb-2" />
+                                <RefreshCw className="w-6 h-6 animate-spin mx-auto text-brand-blue mb-2" />
                                 Buscando duplicatas comerciais no banco seguro...
                               </td>
                             </tr>
@@ -873,8 +873,8 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                                           {/* Payment section (only for non-cancelled and non-paid items) */}
                                           {d.status !== 'Cancelado' && d.status !== 'Pago' && (
                                             <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-3">
-                                              <span className="font-bold text-[10px] text-[#1E3A8A] uppercase tracking-wider flex items-center gap-1">
-                                                <DollarSign className="w-3.5 h-3.5 text-brand-gold" /> Integrações de Pagamentos (Futuras Emissões)
+                                              <span className="font-bold text-[10px] text-brand-blue uppercase tracking-wider flex items-center gap-1">
+                                                <DollarSign className="w-3.5 h-3.5 text-brand-blue" /> Integrações de Pagamentos (Futuras Emissões)
                                               </span>
                                               
                                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1001,11 +1001,11 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
             
             /* AUDIT LOGS TAB */
             <div className="space-y-4">
-              <div>
-                <h4 className="font-bold text-xs text-[#1E3A8A] flex items-center gap-1.5 uppercase tracking-wider">
-                  <ShieldCheck className="w-4 h-4 text-[#C5A021]" /> Auditoria de Duplicatas
-                </h4>
-                <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Histórico de ações de conciliação, criação, alteração e cancelamento de duplicatas capturadas no backend.</p>
+                <div>
+                  <h4 className="font-bold text-xs text-brand-blue flex items-center gap-1.5 uppercase tracking-wider">
+                    <ShieldCheck className="w-4 h-4 text-brand-blue" /> Auditoria de Duplicatas
+                  </h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Histórico de ações de conciliação, criação, alteração e cancelamento de duplicatas capturadas no backend.</p>
               </div>
 
               <div className="overflow-hidden border border-slate-200 rounded-2xl bg-white">
@@ -1023,7 +1023,7 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                     {isLoading ? (
                       <tr>
                         <td colSpan={5} className="p-8 text-center text-slate-400 font-sans">
-                          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#C5A021] mb-2" />
+                          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-brand-blue mb-2" />
                           Buscando registros na auditoria...
                         </td>
                       </tr>

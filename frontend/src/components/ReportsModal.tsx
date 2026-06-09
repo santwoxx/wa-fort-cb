@@ -128,17 +128,17 @@ export function ReportsModal({ debtors, config, onClose }: ReportsModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto antialiased">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-155 max-w-4xl w-full flex flex-col my-8 outline-hidden print:w-full print:border-none print:shadow-none print:p-0 print:m-0">
+    <div className="fixed inset-0 bg-slate-100/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-xl border border-slate-200 max-w-4xl w-full flex flex-col my-8 print:w-full print:border-none print:shadow-none print:p-0 print:m-0">
         
         {/* MODAL HEADER */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between no-print">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-brand-blue/10 border border-brand-blue/20 text-[#1E3A8A] shrink-0">
+            <div className="p-2.5 rounded-xl bg-brand-blue/5 border border-brand-blue/10 shrink-0">
               <BarChart3 className="w-6 h-6 text-brand-blue" />
             </div>
             <div>
-              <h3 className="font-bold text-lg font-display text-[#1E3A8A]">Relatórios & Performance Financeira</h3>
+              <h3 className="font-bold text-lg font-display text-brand-blue">Relatórios & Performance Financeira</h3>
               <p className="text-xs text-slate-500">Métricas completas de eficiência e volumes de créditos recuperados</p>
             </div>
           </div>
@@ -264,10 +264,10 @@ export function ReportsModal({ debtors, config, onClose }: ReportsModalProps) {
           <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5">
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center space-x-2">
-                <Award className="w-4 h-4 text-brand-gold shrink-0" />
+                <Award className="w-4 h-4 text-brand-blue shrink-0" />
                 <span className="text-xs font-bold text-slate-700">Índice de Performance de Recuperação WA Fort</span>
               </div>
-              <span className="text-xs font-black text-[#1E3A8A] bg-white border border-slate-200 px-2 py-0.5 rounded-md">
+              <span className="text-xs font-black text-brand-blue bg-white border border-slate-200 px-2 py-0.5 rounded-md">
                 Taxa de Sucesso: {recoveryRate.toFixed(1)}%
               </span>
             </div>
@@ -307,9 +307,9 @@ export function ReportsModal({ debtors, config, onClose }: ReportsModalProps) {
           </div>
 
           {/* DOWNLOAD / ACTIONS PANEL */}
-          <div className="bg-[#1E3A8A]/5 border border-brand-blue/15 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
+          <div className="bg-brand-blue/5 border border-brand-blue/15 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
             <div className="text-center sm:text-left">
-              <h4 className="font-bold text-sm text-[#1E3A8A] flex items-center justify-center sm:justify-start gap-1">
+              <h4 className="font-bold text-sm text-brand-blue flex items-center justify-center sm:justify-start gap-1">
                 <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Exportar Planilhas de Auditoria
               </h4>
               <p className="text-[11px] text-slate-500 mt-0.5">Prepare os relatórios operacionais completos para conciliação bancária.</p>
@@ -328,7 +328,7 @@ export function ReportsModal({ debtors, config, onClose }: ReportsModalProps) {
               <button
                 type="button"
                 onClick={() => handleExportCSV('all')}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-950 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-md"
+                className="px-4 py-2 bg-brand-blue hover:bg-blue-900 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-md"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
                 Base Completa (.CSV)
@@ -337,7 +337,7 @@ export function ReportsModal({ debtors, config, onClose }: ReportsModalProps) {
               <button
                 type="button"
                 onClick={handlePrint}
-                className="px-4 py-2 bg-brand-gold hover:bg-[#b08e1a] text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-md"
+                className="px-4 py-2 bg-brand-blue hover:bg-blue-900 text-white font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-md"
               >
                 <Printer className="w-3.5 h-3.5" />
                 Imprimir / PDF
@@ -460,12 +460,12 @@ export function ReportsModal({ debtors, config, onClose }: ReportsModalProps) {
         {/* MODAL FOOTER BUTTONS */}
         <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-3xl flex justify-between items-center no-print">
           <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5 uppercase tracking-wider">
-            <Clock className="w-3.5 h-3.5 text-slate-350" /> Operação Integrada WA Fort &bull; 2026
+            <Clock className="w-3.5 h-3.5" /> Operação Integrada WA Fort
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 text-xs bg-slate-900 hover:bg-slate-950 text-white font-black rounded-xl cursor-pointer transition shadow-sm"
+            className="px-5 py-2.5 text-xs bg-brand-blue hover:bg-blue-900 text-white font-bold rounded-xl cursor-pointer transition shadow-sm"
           >
             Fechar Relatórios
           </button>

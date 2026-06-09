@@ -217,17 +217,17 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-150 max-w-lg w-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 bg-slate-100/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-3xl shadow-xl border border-slate-200 max-w-lg w-full flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-brand-gold/10 border border-brand-gold/25 text-[#C5A021] shrink-0">
-              <Settings className="w-5 h-5 text-brand-gold" />
+            <div className="p-2 rounded-xl bg-brand-blue/5 border border-brand-blue/10 shrink-0">
+              <Settings className="w-5 h-5 text-brand-blue" />
             </div>
             <div>
-              <h3 className="font-bold text-base font-display text-[#1E3A8A]">Painel de Controle WA Fort</h3>
+              <h3 className="font-bold text-base font-display text-brand-blue">Painel de Controle WA Fort</h3>
               <p className="text-[11px] text-slate-500">Ajuste dados de recebimento e personalize as mensagens enviadas para todos os contatos</p>
             </div>
           </div>
@@ -246,8 +246,8 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
             onClick={() => setActiveTab('finance')}
             className={`px-3 py-2 text-xs font-bold transition flex items-center gap-1 border-b-2 ${
               activeTab === 'finance'
-                ? 'border-[#1E3A8A] text-[#1E3A8A]'
-                : 'border-transparent text-slate-400 hover:text-slate-650'
+                ? 'border-brand-blue text-brand-blue'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
             <DollarSign className="w-3.5 h-3.5" />
@@ -259,12 +259,12 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
             onClick={() => setActiveTab('templates')}
             className={`px-3 py-2 text-xs font-bold transition flex items-center gap-1 border-b-2 ${
               activeTab === 'templates'
-                ? 'border-[#1E3A8A] text-[#1E3A8A]'
-                : 'border-transparent text-slate-400 hover:text-slate-655'
+                ? 'border-brand-blue text-brand-blue'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            Roteiros de Mensagens 📝
+            Roteiros de Mensagens
           </button>
 
           <button
@@ -272,11 +272,11 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
             onClick={() => setActiveTab('tones')}
             className={`px-3 py-2 text-xs font-bold transition flex items-center gap-1 border-b-2 ${
               activeTab === 'tones'
-                ? 'border-[#1E3A8A] text-[#1E3A8A]'
-                : 'border-transparent text-slate-400 hover:text-slate-500'
+                ? 'border-brand-blue text-brand-blue'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Sparkles className="w-3 h-3 text-brand-gold" />
+            <Sparkles className="w-3 h-3 text-brand-blue" />
             Personalidade da IA
           </button>
 
@@ -286,12 +286,12 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
               onClick={() => setActiveTab('rbac')}
               className={`px-3 py-2 text-xs font-bold transition flex items-center gap-1 border-b-2 ${
                 activeTab === 'rbac'
-                  ? 'border-[#1E3A8A] text-[#1E3A8A]'
-                  : 'border-transparent text-indigo-400 hover:text-indigo-700'
+                  ? 'border-brand-blue text-brand-blue'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
               }`}
             >
-              <Sliders className="w-3.5 h-3.5 text-indigo-650 shrink-0" />
-              Controle de Acesso 🔒
+              <Sliders className="w-3.5 h-3.5 shrink-0" />
+              Controle de Acesso
             </button>
           )}
         </div>
@@ -312,7 +312,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="Ex: WA Fort Telecom & Central"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10 focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue"
                   />
                 </div>
 
@@ -325,7 +325,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     value={pixKey}
                     onChange={(e) => setPixKey(e.target.value)}
                     placeholder="Ex: financeiro@wafort.com.br ou CNPJ"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10 focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue"
                   />
                 </div>
 
@@ -339,7 +339,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     value={paymentMethods}
                     onChange={(e) => setPaymentMethods(e.target.value)}
                     placeholder="Ex: Pix, Código de Barras de Boleto ou Cartão"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10 focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue"
                   />
                 </div>
 
@@ -353,14 +353,14 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     value={customSignature}
                     onChange={(e) => setCustomSignature(e.target.value)}
                     placeholder="Assinatura que acompanhará o rodapé dos textos gerados"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10 focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
                     <span>PIN de Proteção do Terminal Financeiro 🔒</span>
-                    <span className="text-[9px] text-[#1E3A8A] font-bold bg-slate-100 px-1.5 py-0.5 rounded">Apenas Números</span>
+                    <span className="text-[9px] text-brand-blue font-bold bg-slate-100 px-1.5 py-0.5 rounded">Apenas Números</span>
                   </label>
                   <input
                     type="text"
@@ -369,7 +369,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     value={securityPin}
                     onChange={(e) => setSecurityPin(e.target.value.replace(/[^\d]/g, ""))}
                     placeholder="Padrão: 1234"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10 focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue"
                   />
                   <p className="text-[10px] text-slate-400 mt-1 leading-normal">
                     PIN de 4 a 6 dígitos para destravar o painel de cobrança financeira da WA Fort. Senha inicial padrão: <strong className="text-slate-600 font-mono">1234</strong>
@@ -380,20 +380,20 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
 
             {activeTab === 'templates' && (
               <div className="space-y-4">
-                <div className="p-3 bg-[#1E3A8A]/5 border border-brand-blue/15 rounded-xl flex items-start space-x-2">
-                  <AlertCircle className="w-4 h-4 text-[#1E3A8A] shrink-0 mt-0.5" />
+                <div className="p-3 bg-brand-blue/5 border border-brand-blue/15 rounded-xl flex items-start space-x-2">
+                  <AlertCircle className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
                   <div>
-                    <h5 className="text-xs font-bold text-[#1E3A8A]">Roteiros Gerais / Mensagens Globais</h5>
+                    <h5 className="text-xs font-bold text-brand-blue">Roteiros Gerais / Mensagens Globais</h5>
                     <p className="text-[10px] text-slate-500 leading-normal mt-0.5">
                       Estes são os modelos padrão para todos os contatos. Você pode usar as seguintes tags para que o sistema preencha os dados de cada cliente automaticamente ao selecionar o tom correspondente:
                     </p>
                     <div className="flex flex-wrap gap-1 mt-1 bg-white p-1.5 border border-slate-200 rounded">
-                      <code className="text-[9px] text-[#EAB308] bg-slate-50 px-1 font-bold">{"{{cliente}}"}</code>
-                      <code className="text-[9px] text-[#EAB308] bg-slate-50 px-1 font-bold">{"{{valor}}"}</code>
-                      <code className="text-[9px] text-[#EAB308] bg-slate-50 px-1 font-bold">{"{{vencimento}}"}</code>
-                      <code className="text-[9px] text-[#EAB308] bg-slate-50 px-1 font-bold">{"{{servico}}"}</code>
-                      <code className="text-[9px] text-[#EAB308] bg-slate-50 px-1 font-bold">{"{{chave_pix}}"}</code>
-                      <code className="text-[9px] text-[#EAB308] bg-slate-50 px-1 font-bold">{"{{empresa}}"}</code>
+                      <code className="text-[9px] text-brand-blue bg-slate-50 px-1 font-bold">{"{{cliente}}"}</code>
+                      <code className="text-[9px] text-brand-blue bg-slate-50 px-1 font-bold">{"{{valor}}"}</code>
+                      <code className="text-[9px] text-brand-blue bg-slate-50 px-1 font-bold">{"{{vencimento}}"}</code>
+                      <code className="text-[9px] text-brand-blue bg-slate-50 px-1 font-bold">{"{{servico}}"}</code>
+                      <code className="text-[9px] text-brand-blue bg-slate-50 px-1 font-bold">{"{{chave_pix}}"}</code>
+                      <code className="text-[9px] text-brand-blue bg-slate-50 px-1 font-bold">{"{{empresa}}"}</code>
                     </div>
                   </div>
                 </div>
@@ -407,7 +407,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     rows={4}
                     value={templateFriendly}
                     onChange={(e) => setTemplateFriendly(e.target.value)}
-                    className="w-full px-2.5 py-2 border border-slate-250 rounded-lg text-[11px] leading-relaxed font-mono focus:outline-none focus:ring-1 focus:ring-[#1E3A8A]"
+                    className="w-full px-2.5 py-2 border border-slate-250 rounded-lg text-[11px] leading-relaxed font-mono focus:outline-none focus:ring-1 focus:ring-brand-blue"
                   />
                 </div>
 
@@ -420,7 +420,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     rows={4}
                     value={templateFormal}
                     onChange={(e) => setTemplateFormal(e.target.value)}
-                    className="w-full px-2.5 py-2 border border-slate-250 rounded-lg text-[11px] leading-relaxed font-mono focus:outline-none focus:ring-1 focus:ring-[#1E3A8A]"
+                    className="w-full px-2.5 py-2 border border-slate-250 rounded-lg text-[11px] leading-relaxed font-mono focus:outline-none focus:ring-1 focus:ring-brand-blue"
                   />
                 </div>
 
@@ -433,7 +433,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     rows={4}
                     value={templateUrgent}
                     onChange={(e) => setTemplateUrgent(e.target.value)}
-                    className="w-full px-2.5 py-2 border border-slate-250 rounded-lg text-[11px] leading-relaxed font-mono focus:outline-none focus:ring-1 focus:ring-[#1E3A8A]"
+                    className="w-full px-2.5 py-2 border border-slate-250 rounded-lg text-[11px] leading-relaxed font-mono focus:outline-none focus:ring-1 focus:ring-brand-blue"
                   />
                 </div>
 
@@ -446,7 +446,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     rows={4}
                     value={templateNegotiation}
                     onChange={(e) => setTemplateNegotiation(e.target.value)}
-                    className="w-full px-2.5 py-2 border border-slate-250 rounded-lg text-[11px] leading-relaxed font-mono focus:outline-none focus:ring-1 focus:ring-[#1E3A8A]"
+                    className="w-full px-2.5 py-2 border border-slate-250 rounded-lg text-[11px] leading-relaxed font-mono focus:outline-none focus:ring-1 focus:ring-brand-blue"
                   />
                 </div>
               </div>
@@ -454,8 +454,8 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
 
             {activeTab === 'tones' && (
               <div className="space-y-4">
-                <div className="p-3 bg-[#EAB308]/5 border border-brand-gold/15 rounded-xl flex items-start space-x-2.5">
-                  <Sparkles className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
+                <div className="p-3 bg-blue-50/60 border border-blue-100/70 rounded-xl flex items-start space-x-2.5">
+                  <Sparkles className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
                   <p className="text-[11px] text-slate-600 leading-relaxed">
                     Você pode refinar o comportamento da IA para cada um dos tons abaixo. A inteligência artificial <b>Gemini 3.5 Flash</b> lerá estas diretrizes adicionais para adaptar o vocabulário e a abordagem ao redigir mensagens dinâmicas!
                   </p>
@@ -470,7 +470,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     rows={2}
                     value={promptFriendly}
                     onChange={(e) => setPromptFriendly(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-brand-blue/10"
                   />
                 </div>
 
@@ -483,7 +483,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     rows={2}
                     value={promptFormal}
                     onChange={(e) => setPromptFormal(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-brand-blue/10"
                   />
                 </div>
 
@@ -496,7 +496,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     rows={2}
                     value={promptUrgent}
                     onChange={(e) => setPromptUrgent(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-brand-blue/10"
                   />
                 </div>
 
@@ -509,7 +509,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                     rows={2}
                     value={promptNegotiation}
                     onChange={(e) => setPromptNegotiation(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10 font-sans"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-brand-blue/10 font-sans"
                   />
                 </div>
               </div>
@@ -537,7 +537,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       placeholder="Nome completo"
-                      className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1E3A8A]"
+                      className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-blue"
                     />
                     <input
                       type="email"
@@ -545,13 +545,13 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       placeholder="E-mail Google"
-                      className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1E3A8A]"
+                      className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-blue"
                     />
                     <div className="flex gap-2">
                       <select
                         value={newRole}
                         onChange={(e) => setNewRole(e.target.value as UserRole)}
-                        className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 font-bold focus:outline-none focus:ring-1 focus:ring-[#1E3A8A] flex-1"
+                        className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 font-bold focus:outline-none focus:ring-1 focus:ring-brand-blue flex-1"
                       >
                         <option value="Administrador">Admin</option>
                         <option value="Supervisor">Supervisor</option>
@@ -562,7 +562,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                       <button
                         type="button"
                         onClick={handleCreateUser}
-                        className="px-3 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs rounded-lg shadow-sm cursor-pointer"
+                        className="px-3 bg-brand-blue hover:bg-blue-900 text-white font-bold text-xs rounded-lg shadow-sm cursor-pointer"
                       >
                         Adicionar
                       </button>
@@ -640,7 +640,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                                           : [...user.permissoes, p];
                                         handleUpdateUser(user.uid, user.role, newPerms);
                                       }}
-                                      className="rounded text-[#1E3A8A] focus:ring-[#1E3A8A]/20"
+                                      className="rounded text-brand-blue focus:ring-brand-blue/20"
                                     />
                                     <span>{p}</span>
                                   </label>
@@ -661,7 +661,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
           {/* Footer Info Statement */}
           <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
             <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1">
-              <Sliders className="w-3 h-3 text-slate-350" /> Ajuste em tempo real
+              <Sliders className="w-3 h-3" /> Ajuste em tempo real
             </span>
             <div className="flex space-x-2">
               <button
@@ -673,9 +673,9 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-xs bg-[#1E3A8A] hover:bg-blue-950 text-white font-bold rounded-xl shadow-md transition flex items-center space-x-1.5 border border-transparent cursor-pointer"
+                className="px-4 py-2 text-xs bg-brand-blue hover:bg-blue-900 text-white font-bold rounded-xl shadow-md transition flex items-center space-x-1.5 border border-transparent cursor-pointer"
               >
-                <Save className="w-3.5 h-3.5 text-brand-gold shrink-0" />
+                <Save className="w-3.5 h-3.5 shrink-0" />
                 <span>Salvar Tudo</span>
               </button>
             </div>

@@ -82,7 +82,7 @@ export function SummaryStats({ summary, onFilterChange, activeFilter }: SummaryS
             className={`p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
               isActive 
                 ? "bg-white border-brand-blue border-2 shadow-md ring-2 ring-brand-blue/10 scale-[1.02]" 
-                : "bg-white hover:bg-slate-50 border-slate-200 shadow-xs hover:shadow-sm"
+                : "bg-white hover:bg-slate-50 border-slate-200 shadow-sm hover:shadow-md"
             }`}
           >
             <div className="flex items-center justify-between mb-2">

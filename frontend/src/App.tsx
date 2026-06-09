@@ -1056,11 +1056,10 @@ export default function App() {
 
   if (isAuthLoading || (currentUser && isProfileLoading)) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
-        <div className="bg-[#131D35] border border-brand-gold/20 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
-          <RefreshCw className="w-10 h-10 text-brand-gold animate-spin mb-4" />
-          <h3 className="font-display font-medium text-white text-base tracking-tight mb-1">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-sm w-full shadow-lg relative z-10 flex flex-col items-center text-center">
+          <RefreshCw className="w-10 h-10 text-brand-blue animate-spin mb-4" />
+          <h3 className="font-display font-medium text-slate-800 text-base tracking-tight mb-1">
             Conectando ao Servidor Seguro
           </h3>
           <p className="text-xs text-slate-400">
@@ -1073,10 +1072,8 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
-        
-        <div className="bg-[#131D35] border-2 border-brand-gold/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 flex flex-col items-center">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-lg relative z-10 flex flex-col items-center">
           
           {/* Logo */}
           <div className="flex items-center justify-center mb-6">
@@ -1088,28 +1085,28 @@ export default function App() {
             />
           </div>
 
-          <h1 className="font-display font-black text-2xl text-center text-white tracking-tight uppercase mb-2">
-            WA FORT <span className="text-[#C5A021]">Cobrança</span>
+          <h1 className="font-display font-black text-2xl text-center text-brand-blue tracking-tight uppercase mb-2">
+            WA FORT <span className="text-white/80">Cobrança</span>
           </h1>
-          <p className="text-center text-slate-300 text-xs leading-relaxed mb-8 max-w-[320px]">
+          <p className="text-center text-slate-500 text-xs leading-relaxed mb-8 max-w-[320px]">
             Portal Integrado de Cobrança, Recuperação de Crédito de Inadimplentes e Conciliação WA Fort.
           </p>
 
           {authDomainError && (
-            <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl w-full text-left">
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl w-full text-left">
               <div className="flex items-start gap-2.5">
-                <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1">
+                  <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
                     Configuração de Domínio Necessária
                   </h4>
-                  <p className="text-[11px] text-slate-300 leading-normal">
+                  <p className="text-[11px] text-slate-600 leading-normal">
                     Este link de visualização dinâmica do AI Studio roda sob um domínio isolado do Google Cloud que precisa ser adicionado no Console do seu Firebase:
                   </p>
-                  <div className="my-2 p-2 bg-[#0F172A] border border-slate-700 rounded-xl font-mono text-[10px] text-amber-400 select-all break-all text-center font-bold">
+                  <div className="my-2 p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-[10px] text-amber-700 select-all break-all text-center font-bold">
                     {authDomainError}
                   </div>
-                  <p className="text-[10px] text-slate-400 leading-normal">
+                  <p className="text-[10px] text-slate-500 leading-normal">
                     Acesse o seu console Firebase ➔ Authentication ➔ aba Configurações ➔ Domínios Autorizados e adicione o endereço acima.
                   </p>
                 </div>
@@ -1120,9 +1117,8 @@ export default function App() {
           <button
             type="button"
             onClick={handleLogin}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer border border-slate-200"
+            className="w-full flex items-center justify-center gap-3 bg-brand-blue hover:bg-blue-900 text-white font-bold text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer border border-transparent"
           >
-            {/* Google Vector Icon */}
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -1144,13 +1140,13 @@ export default function App() {
             Entrar com Conta Google
           </button>
 
-          <div className="mt-8 flex items-center justify-center gap-2 border-t border-slate-800 pt-6 w-full text-[10px] text-slate-400">
-            <span className="shrink-0 flex items-center gap-1 text-slate-500 font-mono">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#C5A021]" />
-              SESSÃO HIGH-SECURITY
+          <div className="mt-8 flex items-center justify-center gap-2 border-t border-slate-200 pt-6 w-full text-[10px] text-slate-400">
+            <span className="shrink-0 flex items-center gap-1 text-slate-400 font-mono">
+              <ShieldCheck className="w-3.5 h-3.5 text-brand-blue" />
+              SESSÃO SEGURA
             </span>
             <span>|</span>
-            <span className="text-slate-500 font-mono">ENCRYPTED END-TO-END</span>
+            <span className="text-slate-400 font-mono">CRIPTOGRAFADA</span>
           </div>
 
         </div>
@@ -1161,25 +1157,24 @@ export default function App() {
   // 1. If the user profile failed to load or is unavailable, block here.
   if (currentUser && !userProfile) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
-        <div className="bg-[#131D35] border-2 border-amber-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white border-2 border-amber-200 rounded-3xl p-8 max-w-md w-full shadow-lg relative z-10 flex flex-col items-center text-center">
           <ShieldAlert className="w-12 h-12 text-amber-500 mb-4 animate-bounce" />
-          <h2 className="font-display font-black text-xl text-white tracking-tight uppercase mb-2">
+          <h2 className="font-display font-black text-xl text-slate-800 tracking-tight uppercase mb-2">
             Perfil Indisponível
           </h2>
-          <p className="text-slate-300 text-xs leading-relaxed mb-6">
+          <p className="text-slate-500 text-xs leading-relaxed mb-6">
             Não foi possível carregar seu perfil de permissões RBAC do servidor.
           </p>
           {profileError && (
-            <div className="w-full mb-6 p-3 bg-red-500/10 border border-red-500/25 rounded-xl text-left font-mono text-[10px] text-red-200 break-words max-h-48 overflow-y-auto">
+            <div className="w-full mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-left font-mono text-[10px] text-red-700 break-words max-h-48 overflow-y-auto">
               <strong>Detalhes do erro:</strong> {profileError}
             </div>
           )}
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="w-full bg-[#C5A021] hover:bg-[#D4AF37] text-slate-950 font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mb-3"
+            className="w-full bg-brand-blue hover:bg-blue-900 text-white font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mb-3"
           >
             <RefreshCw className="w-4 h-4 animate-spin" />
             Tentar Novamente
@@ -1187,7 +1182,7 @@ export default function App() {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-transparent hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700 text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             Alterar Operador / Sair
@@ -1200,15 +1195,14 @@ export default function App() {
   // 2. If the user does not have basic Visualizar permission, block here.
   if (currentUser && !hasPermission('Visualizar')) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
-        <div className="bg-[#131D35] border-2 border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white border-2 border-red-200 rounded-3xl p-8 max-w-md w-full shadow-lg relative z-10 flex flex-col items-center text-center">
           <ShieldAlert className="w-12 h-12 text-red-500 mb-4 animate-pulse" />
-          <h2 className="font-display font-black text-xl text-white tracking-tight uppercase mb-2">
+          <h2 className="font-display font-black text-xl text-slate-800 tracking-tight uppercase mb-2">
             Acesso Restrito
           </h2>
-          <p className="text-slate-300 text-xs leading-relaxed mb-6">
-            Sua conta (<span className="text-brand-gold font-bold">{userProfile.email}</span>) com função <span className="text-red-400 font-bold">{userProfile.role}</span> não possui a permissão de <span className="font-bold">Visualizar</span> o painel de cobrança.
+          <p className="text-slate-500 text-xs leading-relaxed mb-6">
+            Sua conta (<span className="text-brand-blue font-bold">{userProfile.email}</span>) com função <span className="text-red-500 font-bold">{userProfile.role}</span> não possui a permissão de <span className="font-bold">Visualizar</span> o painel de cobrança.
           </p>
           <p className="text-slate-400 text-[10px] leading-relaxed mb-8">
             Entre em contato com um administrador para obter privilégios adicionais.
@@ -1216,7 +1210,7 @@ export default function App() {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-transparent hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700 text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             Alterar Operador / Sair
@@ -1228,12 +1222,10 @@ export default function App() {
 
   if (currentUser && !isAdminVerified) {
     return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
-        
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <form 
           onSubmit={handleAdminSubmit}
-          className="bg-[#131D35] border-2 border-brand-gold/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 flex flex-col"
+          className="bg-white border-2 border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-lg relative z-10 flex flex-col"
         >
           {/* Logo */}
           <div className="flex items-center justify-center mb-6">
@@ -1245,22 +1237,22 @@ export default function App() {
             />
           </div>
 
-          <h2 className="font-display font-black text-xl text-center text-white tracking-tight uppercase mb-1">
+          <h2 className="font-display font-black text-xl text-center text-brand-blue tracking-tight uppercase mb-1">
             Verificação de Segurança
           </h2>
-          <p className="text-center text-slate-300 text-xs mb-6">
-            Olá, <span className="text-brand-gold font-bold">{currentUser.displayName || currentUser.email}</span>. Digite suas credenciais administrativas de operador para liberar o acesso ao terminal de cobrança.
+          <p className="text-center text-slate-500 text-xs mb-6">
+            Olá, <span className="text-brand-blue font-bold">{currentUser.displayName || currentUser.email}</span>. Digite suas credenciais administrativas de operador para liberar o acesso ao terminal de cobrança.
           </p>
 
           {adminError && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200 text-xs text-center font-semibold">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs text-center font-semibold">
               {adminError}
             </div>
           )}
 
           <div className="space-y-4">
             <div>
-              <label className="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5">
+              <label className="block text-[10px] uppercase font-black tracking-wider text-slate-500 mb-1.5">
                 Usuário Administrativo
               </label>
               <div className="relative">
@@ -1273,13 +1265,13 @@ export default function App() {
                   value={adminLoginInput}
                   onChange={(e) => setAdminLoginInput(e.target.value)}
                   placeholder="Nome de usuário (ex: wafort)"
-                  className="w-full bg-[#0F172A] border border-slate-700 focus:border-brand-gold text-white text-xs rounded-xl pl-9 pr-3 py-3 outline-none transition"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-brand-blue text-slate-800 text-xs rounded-xl pl-9 pr-3 py-3 outline-none transition"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5">
+              <label className="block text-[10px] uppercase font-black tracking-wider text-slate-500 mb-1.5">
                 Senha de Acesso ao Painel
               </label>
               <div className="relative">
@@ -1292,7 +1284,7 @@ export default function App() {
                   value={adminPasswordInput}
                   onChange={(e) => setAdminPasswordInput(e.target.value)}
                   placeholder="Digite a senha admin"
-                  className="w-full bg-[#0F172A] border border-slate-700 focus:border-brand-gold text-white text-xs rounded-xl pl-9 pr-3 py-3 outline-none transition"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-brand-blue text-slate-800 text-xs rounded-xl pl-9 pr-3 py-3 outline-none transition"
                 />
               </div>
             </div>
@@ -1300,7 +1292,7 @@ export default function App() {
 
           <button
             type="submit"
-            className="w-full mt-6 bg-[#C5A021] hover:bg-[#D4AF37] text-slate-950 font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+            className="w-full mt-6 bg-brand-blue hover:bg-blue-900 text-white font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
           >
             <ShieldCheck className="w-4 h-4" />
             Liberar Terminal
@@ -1309,16 +1301,16 @@ export default function App() {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full mt-3 bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full mt-3 bg-transparent hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700 text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             Alterar Operador / Sair
           </button>
 
-          <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-800 pt-4 text-[9px] text-slate-500 font-mono">
-            <span>SECURE GATEWAY</span>
+          <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-200 pt-4 text-[9px] text-slate-400 font-mono">
+            <span>GATEWAY SEGURO</span>
             <span>•</span>
-            <span>MFA OPERATOR ENFORCED</span>
+            <span>MFA OBRIGATÓRIO</span>
           </div>
         </form>
       </div>
@@ -1330,8 +1322,8 @@ export default function App() {
 
     if (!hasPinSet) {
       return (
-        <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
+        <div className="min-h-screen bg-bg-slate flex flex-col items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[radial-gradient(#003366_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-8" />
           
           <form 
             onSubmit={async (e) => {
@@ -1364,7 +1356,7 @@ export default function App() {
                 setLoginPinError("Erro ao registrar PIN no servidor.");
               }
             }}
-            className="bg-[#131D35] border-2 border-brand-gold/30 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative z-10 flex flex-col"
+            className="bg-white border-2 border-slate-200 rounded-3xl p-8 max-w-sm w-full shadow-lg relative z-10 flex flex-col"
           >
             <div className="flex items-center justify-center mb-6">
               <img 
@@ -1375,22 +1367,22 @@ export default function App() {
               />
             </div>
 
-            <h2 className="font-display font-black text-xl text-center text-white tracking-tight uppercase mb-1">
+            <h2 className="font-display font-black text-xl text-center text-brand-blue tracking-tight uppercase mb-1">
               Primeiro Acesso: Criar PIN
             </h2>
-            <p className="text-center text-slate-300 text-xs mb-6">
-              Olá, <span className="text-brand-gold font-bold">{currentUser.displayName || currentUser.email}</span>. Para proteger suas operações financeiras, crie um PIN numérico pessoal de 4 a 6 dígitos.
+            <p className="text-center text-slate-500 text-xs mb-6">
+              Olá, <span className="text-brand-blue font-bold">{currentUser.displayName || currentUser.email}</span>. Para proteger suas operações financeiras, crie um PIN numérico pessoal de 4 a 6 dígitos.
             </p>
 
             {loginPinError && (
-              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200 text-xs text-center font-semibold">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs text-center font-semibold">
                 {loginPinError}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5 text-center">
+                <label className="block text-[10px] uppercase font-black tracking-wider text-slate-500 mb-1.5 text-center">
                   Defina seu Novo PIN
                 </label>
                 <div className="relative">
@@ -1404,7 +1396,7 @@ export default function App() {
                     value={loginPinInput}
                     onChange={(e) => setLoginPinInput(e.target.value.replace(/[^\d]/g, ""))}
                     placeholder="• • • •"
-                    className="w-full bg-[#0F172A] border border-slate-700 focus:border-brand-gold text-white text-center text-lg tracking-widest rounded-xl py-3 outline-none transition font-mono"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-brand-blue text-slate-800 text-center text-lg tracking-widest rounded-xl py-3 outline-none transition font-mono"
                   />
                 </div>
               </div>
@@ -1412,7 +1404,7 @@ export default function App() {
 
             <button
               type="submit"
-              className="w-full mt-6 bg-[#C5A021] hover:bg-[#D4AF37] text-slate-950 font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+              className="w-full mt-6 bg-brand-blue hover:bg-blue-900 text-white font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
             >
               <ShieldCheck className="w-4 h-4" />
               Salvar PIN e Liberar Sistema
@@ -1421,16 +1413,16 @@ export default function App() {
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full mt-3 bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full mt-3 bg-transparent hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700 text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               Sair
             </button>
 
-            <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-800 pt-4 text-[9px] text-slate-500 font-mono">
-              <span>CREATE PIN ENCRYPTED</span>
+            <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-200 pt-4 text-[9px] text-slate-400 font-mono">
+              <span>PIN CRIPTOGRAFADO</span>
               <span>•</span>
-              <span>WA FORT STANDARD</span>
+              <span>PADRÃO WA FORT</span>
             </div>
           </form>
         </div>
@@ -1438,12 +1430,10 @@ export default function App() {
     }
 
     return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
-        
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <form 
           onSubmit={handleLoginPinSubmit}
-          className="bg-[#131D35] border-2 border-brand-gold/30 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative z-10 flex flex-col"
+          className="bg-white border-2 border-slate-200 rounded-3xl p-8 max-w-sm w-full shadow-lg relative z-10 flex flex-col"
         >
           {/* Logo */}
           <div className="flex items-center justify-center mb-6">
@@ -1455,22 +1445,22 @@ export default function App() {
             />
           </div>
 
-          <h2 className="font-display font-black text-xl text-center text-white tracking-tight uppercase mb-1">
+          <h2 className="font-display font-black text-xl text-center text-brand-blue tracking-tight uppercase mb-1">
             Segurança: PIN Requerido
           </h2>
-          <p className="text-center text-slate-300 text-xs mb-6">
-            Olá, <span className="text-brand-gold font-bold">{currentUser.displayName || currentUser.email}</span>. Digite seu PIN de segurança pessoal/financeira de 4 a 6 dígitos para liberar o terminal.
+          <p className="text-center text-slate-500 text-xs mb-6">
+            Olá, <span className="text-brand-blue font-bold">{currentUser.displayName || currentUser.email}</span>. Digite seu PIN de segurança pessoal/financeira de 4 a 6 dígitos para liberar o terminal.
           </p>
 
           {loginPinError && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200 text-xs text-center font-semibold">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs text-center font-semibold">
               {loginPinError}
             </div>
           )}
 
           <div className="space-y-4">
             <div>
-              <label className="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5 text-center">
+              <label className="block text-[10px] uppercase font-black tracking-wider text-slate-500 mb-1.5 text-center">
                 PIN de Segurança
               </label>
               <div className="relative">
@@ -1484,7 +1474,7 @@ export default function App() {
                   value={loginPinInput}
                   onChange={(e) => setLoginPinInput(e.target.value.replace(/[^\d]/g, ""))}
                   placeholder="• • • •"
-                  className="w-full bg-[#0F172A] border border-slate-700 focus:border-brand-gold text-white text-center text-lg tracking-widest rounded-xl py-3 outline-none transition font-mono"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-brand-blue text-slate-800 text-center text-lg tracking-widest rounded-xl py-3 outline-none transition font-mono"
                 />
               </div>
             </div>
@@ -1492,7 +1482,7 @@ export default function App() {
 
           <button
             type="submit"
-            className="w-full mt-6 bg-[#C5A021] hover:bg-[#D4AF37] text-slate-950 font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+            className="w-full mt-6 bg-brand-blue hover:bg-blue-900 text-white font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
           >
             <ShieldCheck className="w-4 h-4" />
             Confirmar PIN e Entrar
@@ -1516,7 +1506,7 @@ export default function App() {
                 showAlert("Senha do Operador incorreta. Acesso de redefinição negado.", "Erro de Recuperação");
               }
             }}
-            className="w-full mt-3 text-center text-[11px] text-amber-450 hover:underline hover:text-amber-400 font-bold bg-transparent border-none outline-none cursor-pointer"
+            className="w-full mt-3 text-center text-[11px] text-brand-blue hover:underline font-bold bg-transparent border-none outline-none cursor-pointer"
           >
             Esqueci meu PIN / Recuperar PIN
           </button>
@@ -1524,16 +1514,16 @@ export default function App() {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full mt-3 bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full mt-3 bg-transparent hover:bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700 text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             Alterar Operador / Sair
           </button>
 
-          <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-800 pt-4 text-[9px] text-slate-500 font-mono">
-            <span>SECURE SHIELD ACTIVE</span>
+          <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-200 pt-4 text-[9px] text-slate-400 font-mono">
+            <span>ESCUDO ATIVO</span>
             <span>•</span>
-            <span>MFA ENFORCED</span>
+            <span>MFA OBRIGATÓRIO</span>
           </div>
         </form>
       </div>
@@ -1545,169 +1535,139 @@ export default function App() {
   return (
     <div className="min-h-screen bg-bg-slate flex flex-col selection:bg-brand-blue/10">
       
-      {/* HEADER RAIL - Professional navy blue background, with clean white text and gold border & minor accents */}
-      <header className="bg-brand-blue text-white py-4 px-6 shadow-md border-b-2 border-brand-gold relative">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* HEADER - Blue/white style Inside Sistemas */}
+      <header className="bg-brand-blue text-white py-3 px-6 shadow-md relative">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           
-          {/* Logo Brand Brand Section - Space Grotesk / Inter pairings */}
-          <div className="flex items-center space-x-4">
+          {/* Logo + Brand */}
+          <div className="flex items-center space-x-3">
             <div className="flex items-center justify-center shrink-0">
               <img 
                 src="https://i.ibb.co/21BbKLMF/setor-de-cobran-as-3.png" 
                 alt="WA Fort Setor de Cobranças" 
-                className="h-20 md:h-24 w-auto object-contain rounded-lg transition-transform duration-300 hover:scale-105"
+                className="h-14 md:h-16 w-auto object-contain"
                 referrerPolicy="no-referrer"
               />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-display font-bold text-xl tracking-tight text-white uppercase">
-                  WA FORT <span className="text-brand-gold font-light">Cobrança</span>
+                <span className="font-display font-bold text-lg tracking-tight text-white uppercase">
+                  WA FORT <span className="text-blue-200 font-light">Cobrança</span>
                 </span>
-                <span className="text-[10px] bg-emerald-600 font-bold px-1.5 py-0.5 rounded text-white tracking-widest uppercase">
-                  IA ativa
-                </span>
-                <span className="text-[10px] bg-white/10 font-bold px-1.5 py-0.5 rounded text-brand-gold font-mono">
-                  v2.4.1
+                <span className="text-[9px] bg-emerald-600 font-bold px-1.5 py-0.5 rounded text-white tracking-widest uppercase">
+                  IA
                 </span>
               </div>
-              <p className="text-[11px] text-blue-200">
-                Sistema Integrado de Conciliação e Recuperação de Crédito Semi-Automático
+              <p className="text-[10px] text-blue-200">
+                Sistema Integrado de Conciliação e Recuperação de Crédito
               </p>
             </div>
           </div>
 
-          {/* Action Center - Operator badge, Config, Lock, Import, Sample Mocks */}
-          <div className="flex items-center flex-wrap gap-2.5">
+          {/* Action Buttons */}
+          <div className="flex items-center flex-wrap gap-2">
             
-            {/* Operator Display Badge */}
-            <div className="flex items-center gap-2 bg-white/10 pl-2 pr-3 py-1.5 rounded-xl border border-white/5">
+            {/* Operator Badge */}
+            <div className="flex items-center gap-2 bg-white/10 pl-2 pr-2 py-1 rounded-lg">
               {currentUser.photoURL ? (
                 <img 
                   src={currentUser.photoURL} 
                   alt={currentUser.displayName || "Operador"} 
-                  className="w-6 h-6 rounded-full border border-brand-gold"
+                  className="w-5 h-5 rounded-full"
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-brand-gold/20 flex items-center justify-center text-brand-gold text-[10px] font-bold uppercase">
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white text-[8px] font-bold uppercase">
                   {currentUser.displayName ? currentUser.displayName.slice(0, 2) : "OP"}
                 </div>
               )}
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] font-black text-white leading-none">
-                  {currentUser.displayName || "Painel Operador"}
-                </span>
-                <span className="text-[8px] text-blue-200 leading-none mt-0.5 font-medium">
-                  {currentUser.email}
-                </span>
-              </div>
+              <span className="text-[9px] text-white font-semibold truncate max-w-[80px]">
+                {currentUser.displayName || currentUser.email}
+              </span>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="ml-2 p-1 hover:bg-white/15 hover:text-red-300 rounded text-blue-200 transition cursor-pointer"
-                title="Sair do painel e encerrar sessão"
+                className="p-0.5 hover:bg-white/15 rounded text-blue-200 transition cursor-pointer"
+                title="Sair"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-3 h-3" />
               </button>
             </div>
+
             <button
               onClick={() => setIsTerminalLocked(true)}
-              className="px-3 py-2 text-xs font-semibold bg-red-600/30 hover:bg-red-600/45 border border-red-500/20 text-red-200 hover:text-white rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
-              title="Travar segurança do painel imediatamente contra olhares terceiros"
+              className="px-2 py-1 text-[9px] font-semibold bg-red-600/30 hover:bg-red-600/45 border border-red-500/20 text-red-200 rounded-lg flex items-center gap-1 transition cursor-pointer"
+              title="Travar terminal"
             >
-              <Lock className="w-3.5 h-3.5 text-red-300 shrink-0" />
-              <span>Bloquear Terminal</span>
+              <Lock className="w-3 h-3" />
+              <span className="hidden sm:inline">Travar</span>
             </button>
 
             {currentUser.isDemo && (
-              <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1.5 rounded-xl border border-white/5">
-                <span className="text-[10px] uppercase font-bold text-slate-300 shrink-0">Simular Perfil:</span>
-                <select
-                  value={demoRole}
-                  onChange={(e) => setDemoRole(e.target.value as UserRole)}
-                  className="bg-brand-blue border border-slate-700 text-white text-[10px] rounded-lg p-1.5 font-bold outline-none cursor-pointer focus:border-brand-gold"
-                >
-                  <option value="Administrador">Administrador</option>
-                  <option value="Supervisor">Supervisor</option>
-                  <option value="Financeiro">Financeiro</option>
-                  <option value="Operador">Operador</option>
-                  <option value="Auditor">Auditor</option>
-                </select>
-              </div>
+              <select
+                value={demoRole}
+                onChange={(e) => setDemoRole(e.target.value as UserRole)}
+                className="bg-white/10 border border-white/20 text-white text-[9px] rounded-lg p-1 font-bold outline-none cursor-pointer"
+              >
+                <option value="Administrador">Admin</option>
+                <option value="Supervisor">Supervisor</option>
+                <option value="Financeiro">Financeiro</option>
+                <option value="Operador">Operador</option>
+                <option value="Auditor">Auditor</option>
+              </select>
             )}
 
             {hasPermission('Editar') && (
               <button
                 onClick={() => setIsSettingsModalOpen(true)}
-                className="px-3 py-2 text-xs font-semibold bg-white/10 hover:bg-white/15 border border-white/10 text-white hover:text-brand-gold rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                className="px-2 py-1 text-[9px] font-semibold bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-lg flex items-center gap-1 transition cursor-pointer"
               >
-                <Settings className="w-3.5 h-3.5 shrink-0" />
-                <span>Dados da WA Fort</span>
+                <Settings className="w-3 h-3" />
+                <span className="hidden sm:inline">Config</span>
               </button>
             )}
 
             <button
-              id="reports-trigger"
               onClick={() => setIsReportsModalOpen(true)}
-              className="px-3 py-2 text-xs font-bold bg-[#EAB308]/15 hover:bg-[#EAB308]/25 border border-brand-gold/30 text-brand-gold hover:text-white rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
-              title="Baixar relatórios de créditos recuperados e taxas de sucesso"
+              className="px-2 py-1 text-[9px] font-bold bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-lg flex items-center gap-1 transition cursor-pointer"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-brand-gold shrink-0" />
-              <span>Relatórios</span>
+              <FileSpreadsheet className="w-3 h-3" />
+              <span className="hidden sm:inline">Relatórios</span>
             </button>
 
             {hasPermission('Visualizar') && (
               <button
-                id="duplicatas-trigger"
                 onClick={() => setIsDuplicatasModalOpen(true)}
-                className="px-3 py-2 text-xs font-bold bg-[#C5A021]/15 hover:bg-[#C5A021]/25 border border-[#C5A021]/30 text-brand-gold hover:text-white rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
-                title="Visualizar e gerenciar duplicatas comerciais, boletos e pagamentos Pix"
+                className="px-2 py-1 text-[9px] font-bold bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-lg flex items-center gap-1 transition cursor-pointer"
               >
-                <FileCheck className="w-3.5 h-3.5 text-brand-gold shrink-0" />
-                <span>Duplicatas</span>
+                <FileCheck className="w-3 h-3" />
+                <span className="hidden sm:inline">Duplicatas</span>
               </button>
             )}
 
             {hasPermission('Visualizar') && (
               <button
-                id="cashflow-trigger"
                 onClick={() => setIsCashFlowModalOpen(true)}
-                className="px-3 py-2 text-xs font-bold bg-[#10B981]/15 hover:bg-[#10B981]/25 border border-emerald-500/30 text-emerald-400 hover:text-white rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
-                title="Visualizar fluxo de caixa, registrar entradas/saídas e estornos de caixa"
+                className="px-2 py-1 text-[9px] font-bold bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-lg flex items-center gap-1 transition cursor-pointer"
               >
-                <Layers className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-pulse" />
-                <span>Fluxo de Caixa</span>
+                <Layers className="w-3 h-3" />
+                <span className="hidden sm:inline">Caixa</span>
               </button>
             )}
             
             {hasPermission('Criar') && (
               <button
-                id="import-trigger"
                 onClick={() => setIsImportModalOpen(true)}
-                className="px-4 py-2 text-xs font-bold bg-brand-gold hover:bg-[#b08e1a] text-white rounded-xl flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
+                className="px-3 py-1.5 text-[9px] font-bold bg-white text-brand-blue hover:bg-blue-50 rounded-lg flex items-center gap-1 transition shadow-sm cursor-pointer"
               >
-                <Plus className="w-4 h-4 shrink-0" />
-                <span>Novo Inadimplente</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Novo</span>
               </button>
             )}
           </div>
 
         </div>
       </header>
-
-      {/* SUB-BAR CURRENT AT - Displays time metadata for credit desk clerks */}
-      <div className="bg-brand-blue/5 py-2 px-6 border-b border-slate-200">
-        <div className="max-w-7xl mx-auto flex justify-between items-center text-[11px] text-slate-500 font-medium">
-          <div className="flex items-center space-x-1.5">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span>Turno Operacional Local</span>
-          </div>
-          <div className="font-mono text-slate-650 bg-white/80 px-2 py-0.5 rounded border border-slate-200/80 shadow-xs">
-            2026-06-02 | UTC 14:36
-          </div>
-        </div>
-      </div>
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col">
         
@@ -1740,7 +1700,7 @@ export default function App() {
           >
             <span>Painel de Disparo</span>
             {activeDebtor && (
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-black truncate max-w-[90px] ${mobileTab === 'editor' ? 'bg-brand-gold/20 text-brand-gold' : 'bg-slate-200 text-slate-600'}`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded font-black truncate max-w-[90px] ${mobileTab === 'editor' ? 'bg-brand-blue/10 text-brand-blue' : 'bg-slate-200 text-slate-600'}`}>
                 {activeDebtor.name.split(" ")[0]}
               </span>
             )}
@@ -1789,7 +1749,7 @@ export default function App() {
                   title="Gerar mensagens via inteligência artificial para todos os itens visíveis na tabela que estão pendentes"
                   className="px-3 py-1.5 bg-brand-blue hover:bg-blue-900 text-white disabled:opacity-55 text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 border border-transparent shadow-xs cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-brand-gold" />
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
                   <span className="hidden sm:inline">Gerar Todos (IA)</span>
                 </button>
               </div>
@@ -1813,7 +1773,7 @@ export default function App() {
                       onClick={() => setIsImportModalOpen(true)}
                       className="w-full py-2 bg-brand-blue hover:bg-blue-900 text-white font-bold text-xs rounded-xl transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs border border-transparent"
                     >
-                      <Plus className="w-3.5 h-3.5 text-brand-gold" />
+                      <Plus className="w-3.5 h-3.5 text-white" />
                       <span>Importar Inadimplentes</span>
                     </button>
                     
@@ -1859,7 +1819,7 @@ export default function App() {
                       }}
                       className={`p-4 transition cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ${
                         isActive 
-                          ? "bg-slate-50 border-l-4 border-brand-gold shadow-xs" 
+                          ? "bg-slate-50 border-l-4 border-brand-blue shadow-xs" 
                           : "hover:bg-slate-50/50 border-l-4 border-transparent"
                       }`}
                     >
@@ -1983,19 +1943,19 @@ export default function App() {
           }`}>
             
             {/* Section Header */}
-            <div className="bg-brand-blue text-white p-4 border-b-2 border-brand-gold flex items-center justify-between">
+            <div className="bg-brand-blue text-white p-4 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setMobileTab("list")}
                   className="lg:hidden p-1 mr-1 bg-white/10 hover:bg-white/20 rounded text-white transition flex items-center justify-center cursor-pointer"
                   title="Voltar para a Lista de Cobrança"
                 >
-                  <ChevronLeft className="w-4 h-4 text-brand-gold" />
+                  <ChevronLeft className="w-4 h-4 text-white" />
                 </button>
-                <MessageCircle className="w-4 h-4 text-brand-gold" />
-                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-100">Painel de Disparo Individual</h3>
+                <MessageCircle className="w-4 h-4 text-white" />
+                <h3 className="font-bold text-xs uppercase tracking-wider text-blue-100">Painel de Disparo Individual</h3>
               </div>
-              <span className="text-[10px] font-semibold bg-brand-gold/10 text-brand-gold border border-brand-gold/20 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-semibold bg-white/10 text-blue-200 border border-white/20 px-2 py-0.5 rounded">
                 Semi-Automático
               </span>
             </div>
@@ -2086,7 +2046,7 @@ export default function App() {
                     <label className="text-xs font-bold text-slate-700 flex items-center space-x-1">
                       <span>Texto Pré-Preenchido</span>
                       <span className="text-[10px] text-brand-blue bg-blue-50 px-1.5 py-0.2 rounded font-semibold flex items-center">
-                        <Sparkle className="w-3 h-3 text-brand-gold mr-0.5" /> IA Ativa
+                        <Sparkle className="w-3 h-3 text-brand-blue mr-0.5" /> IA Ativa
                       </span>
                     </label>
                     
@@ -2116,7 +2076,7 @@ export default function App() {
                         key={badge.type}
                         onClick={() => handleInsertPlaceholder(badge.type as any)}
                         type="button"
-                        className="text-[9px] bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-medium px-2 py-0.5 rounded-lg cursor-pointer transition shadow-xs hover:border-[#1E3A8A]"
+                        className="text-[9px] bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-medium px-2 py-0.5 rounded-lg cursor-pointer transition shadow-xs hover:border-brand-blue"
                       >
                         {badge.label}
                       </button>
@@ -2154,7 +2114,7 @@ export default function App() {
                             className="bg-slate-50 hover:bg-slate-100 active:bg-slate-200 border border-slate-200 text-slate-700 font-bold px-2 py-1 rounded-lg flex items-center space-x-1 cursor-pointer transition shadow-xs"
                             title="Copiar texto para área de transferência"
                           >
-                            <Copy className="w-2.8 h-2.8 text-[#1E3A8A]" />
+                            <Copy className="w-2.8 h-2.8 text-brand-blue" />
                             <span>{copyFeedback ? "Copiado!" : "Copiar Texto"}</span>
                           </button>
                         </div>
@@ -2217,7 +2177,7 @@ export default function App() {
                           handleUpdateStatus(activeDebtor.id, prev);
                         }}
                         disabled={!hasPermission('Aprovar')}
-                        className="mt-2 text-[10px] text-[#1E3A8A] hover:underline disabled:opacity-50 font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer shadow-xs inline-flex items-center gap-1 hover:bg-slate-50 transition"
+                        className="mt-2 text-[10px] text-brand-blue hover:underline disabled:opacity-50 font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer shadow-xs inline-flex items-center gap-1 hover:bg-slate-50 transition"
                       >
                         <span>Desfazer baixa (restaurar como {
                           previousDebtStatuses[activeDebtor.id] === 'pending' ? 'Pendente' :
@@ -2260,13 +2220,13 @@ export default function App() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-slate-900 text-slate-500 py-6 px-6 text-center text-xs mt-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 font-medium">
+      <footer className="bg-white text-slate-400 py-5 px-6 text-center text-[10px] mt-12 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 font-medium">
           <p>
             &copy; {new Date().getFullYear()} WA FORT. Todos os direitos reservados.
           </p>
-          <div className="flex space-x-4">
-            <span className="text-brand-gold">Recuperação de Crédito Inteligente</span>
+          <div className="flex space-x-3">
+            <span>Recuperação de Crédito Inteligente</span>
             <span>-</span>
             <span>Vite + React + Gemini AI</span>
           </div>
@@ -2324,24 +2284,20 @@ export default function App() {
 
       {/* WORKSTATION PIN CODE SECURITY SCREEN */}
       {isTerminalLocked && (
-        <div className="fixed inset-0 z-[9999] bg-[#0F172A] flex flex-col items-center justify-center p-4 select-none">
-          <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15 animate-pulse" />
-          
-          <div className="bg-[#131D35] border-2 border-brand-gold/40 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
+        <div className="fixed inset-0 z-[9999] bg-slate-100/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 select-none">
+          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-xl relative z-10 flex flex-col items-center text-center">
             
-            {/* Shield and Lock Brand Icon */}
-            <div className="w-16 h-16 rounded-full bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center mb-4 text-[#EAB308]">
+            <div className="w-16 h-16 rounded-full bg-brand-blue/5 border border-brand-blue/10 flex items-center justify-center mb-4 text-brand-blue">
               <Lock className="w-8 h-8 animate-pulse" />
             </div>
 
-            <h2 className="text-white font-display font-black text-lg tracking-wide uppercase">
+            <h2 className="text-brand-blue font-display font-black text-lg tracking-wide uppercase">
               Terminal Bloqueado
             </h2>
-            <p className="text-[11px] text-blue-200 mt-1.5 max-w-[280px]">
+            <p className="text-[11px] text-slate-500 mt-1.5 max-w-[280px]">
               O acesso aos cadastros fiscais de inadimplentes da WA Fort está resguardado por PIN de segurança (padrão LGPD).
             </p>
 
-            {/* Simulated Dot Indicator of keyed numbers */}
             <div className="my-6 w-full">
               <div className="flex justify-center space-x-3 mb-2">
                 {[1, 2, 3, 4, 5, 6].map((i) => {
@@ -2351,8 +2307,8 @@ export default function App() {
                       key={i}
                       className={`w-3.5 h-3.5 rounded-full transition-all duration-150 ${
                         hasCharacter 
-                          ? "bg-brand-gold scale-110 shadow-[0_0_8px_#EAB308]" 
-                          : "bg-slate-705 border border-slate-650 bg-slate-800 scale-100"
+                          ? "bg-brand-blue scale-110 shadow-[0_0_8px_rgba(0,51,102,0.3)]" 
+                          : "bg-slate-200 border border-slate-300 scale-100"
                       }`}
                     />
                   );
@@ -2360,13 +2316,12 @@ export default function App() {
               </div>
               
               {pinError ? (
-                <p className="text-[11px] text-red-400 font-semibold mt-2">{pinError}</p>
+                <p className="text-[11px] text-red-500 font-semibold mt-2">{pinError}</p>
               ) : (
                 <p className="text-[10px] text-slate-400 mt-2">Insira sua chave numérica para desbloquear</p>
               )}
             </div>
 
-            {/* 3x4 GRID NUMPAD */}
             <div className="grid grid-cols-3 gap-3 w-full max-w-[240px]">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <button
@@ -2378,25 +2333,23 @@ export default function App() {
                       setPinError(null);
                     }
                   }}
-                  className="w-16 h-14 rounded-xl bg-white/5 hover:bg-white/10 active:bg-brand-gold/20 border border-white/10 text-white font-bold text-xl flex items-center justify-center transition cursor-pointer"
+                  className="w-16 h-14 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-brand-blue/10 border border-slate-200 text-slate-700 font-bold text-xl flex items-center justify-center transition cursor-pointer"
                 >
                   {num}
                 </button>
               ))}
               
-              {/* Reset/Clear button */}
               <button
                 type="button"
                 onClick={() => {
                   setPinInput("");
                   setPinError(null);
                 }}
-                className="w-16 h-14 rounded-xl bg-red-900/10 hover:bg-red-900/25 text-red-300 font-bold text-xs flex items-center justify-center transition cursor-pointer border border-red-900/20"
+                className="w-16 h-14 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 font-bold text-xs flex items-center justify-center transition cursor-pointer border border-red-200"
               >
                 LIMPAR
               </button>
 
-              {/* Zero digit */}
               <button
                 type="button"
                 onClick={() => {
@@ -2405,35 +2358,33 @@ export default function App() {
                     setPinError(null);
                   }
                 }}
-                className="w-16 h-14 rounded-xl bg-white/5 hover:bg-white/10 active:bg-brand-gold/20 border border-white/10 text-white font-bold text-xl flex items-center justify-center transition cursor-pointer"
+                className="w-16 h-14 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-brand-blue/10 border border-slate-200 text-slate-700 font-bold text-xl flex items-center justify-center transition cursor-pointer"
               >
                 0
               </button>
 
-              {/* Backspace button */}
               <button
                 type="button"
                 onClick={() => {
                   setPinInput(prev => prev.slice(0, -1));
                   setPinError(null);
                 }}
-                className="w-16 h-14 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-lg flex items-center justify-center transition cursor-pointer border border-slate-700"
+                className="w-16 h-14 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 font-extrabold text-lg flex items-center justify-center transition cursor-pointer border border-slate-200"
               >
                 ⌫
               </button>
             </div>
 
-            {/* Unlock Button */}
             <button
               onClick={() => handleUnlockTerminal()}
-              className="mt-6 w-full py-3.5 bg-brand-gold hover:bg-[#b08e1a] active:bg-[#967713] text-white font-bold text-xs rounded-xl tracking-wider uppercase transition shadow-md flex items-center justify-center space-x-2 cursor-pointer border border-transparent"
+              className="mt-6 w-full py-3.5 bg-brand-blue hover:bg-blue-900 text-white font-bold text-xs rounded-xl tracking-wider uppercase transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <Unlock className="w-3.5 h-3.5" />
               <span>Destravar Sistema</span>
             </button>
 
-            <span className="text-[9px] text-slate-500 mt-5 font-mono">
-              PIN Padrão de Fábrica: <b className="text-slate-400">1234</b> (Altere nas configurações)
+            <span className="text-[9px] text-slate-400 mt-5 font-mono">
+              PIN Padrão: <b className="text-slate-500">1234</b> (Altere nas configurações)
             </span>
 
           </div>
@@ -2442,11 +2393,11 @@ export default function App() {
 
       {/* CUSTOM DIALOG (ALERT OR CONFIRM) POPUP */}
       {dialog.isOpen && (
-        <div className="fixed inset-0 z-[10000] bg-slate-910 bg-opacity-70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
+        <div className="fixed inset-0 z-[10000] bg-slate-100/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-xl relative z-10 flex flex-col items-center text-center">
             
-            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center mb-4 text-[#D97706]">
-              <AlertCircle className="w-6 h-6 animate-pulse" />
+            <div className="w-12 h-12 rounded-full bg-brand-blue/5 border border-brand-blue/10 flex items-center justify-center mb-4 text-brand-blue">
+              <AlertCircle className="w-6 h-6" />
             </div>
 
             <h3 className="font-display font-black text-slate-800 text-base tracking-tight mb-2">

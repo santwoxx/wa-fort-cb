@@ -272,14 +272,14 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-150 max-w-2xl w-full max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-slate-100/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-2xl w-full max-h-[90vh] flex flex-col">
         
         {/* Header */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-brand-blue text-white">
-              <PlusCircle className="w-5 h-5 text-brand-gold" />
+            <div className="p-2 rounded-lg bg-brand-blue/10">
+              <PlusCircle className="w-5 h-5 text-brand-blue" />
             </div>
             <div>
               <h3 className="font-bold text-lg font-display text-brand-blue">Adicionar Inadimplentes</h3>
@@ -295,7 +295,7 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
         </div>
 
         {/* Tab Selection */}
-        <div className="flex border-b border-slate-100 px-5 bg-slate-50/50">
+        <div className="flex border-b border-slate-100 px-5 bg-white">
           <button
             onClick={() => {
               setActiveTab("single");
@@ -335,11 +335,11 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
             }}
             className={`py-3 px-4 font-semibold text-xs uppercase tracking-wider border-b-2 transition-all flex items-center space-x-2 cursor-pointer ${
               activeTab === "ai"
-                ? "border-brand-blue text-brand-blue font-bold text-slate-900"
+                ? "border-brand-blue text-brand-blue font-bold"
                 : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
           >
-            <Sparkles className="w-4 h-4 text-brand-gold fill-brand-gold/20" />
+            <Sparkles className="w-4 h-4 text-brand-blue" />
             <span>Extrator por IA (PDF / E-mail / Foto)</span>
           </button>
         </div>
@@ -466,7 +466,7 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
                   type="submit"
                   className="px-5 py-2 text-sm bg-brand-blue hover:bg-blue-900 text-white font-bold rounded-xl shadow-xs transition flex items-center space-x-2 cursor-pointer border border-transparent"
                 >
-                  <Save className="w-4 h-4 text-brand-gold" />
+                  <Save className="w-4 h-4 text-white" />
                   <span>Salvar Inadimplente</span>
                 </button>
               </div>
@@ -493,12 +493,12 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
                 onDrop={handleDrop}
                 className={`border-2 border-dashed p-6 rounded-xl flex flex-col items-center justify-center transition-colors text-center cursor-pointer ${
                   isDragOver 
-                    ? "border-brand-gold bg-amber-50/20 text-brand-blue" 
+                    ? "border-brand-blue bg-blue-50/30 text-brand-blue" 
                     : "border-slate-200 bg-slate-50 hover:bg-slate-100/50 text-slate-500"
                 }`}
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Upload className={`w-8 h-8 mb-2 ${isDragOver ? "text-brand-gold" : "text-slate-400"}`} />
+                <Upload className={`w-8 h-8 mb-2 ${isDragOver ? "text-brand-blue" : "text-slate-400"}`} />
                 <span className="text-xs font-semibold text-slate-700">
                   Arraste e solte seu arquivo de cobrança (.csv ou .txt) aqui
                 </span>
@@ -582,8 +582,8 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
           {/* AI TAB FOR UNSTRUCTURED AND PDF TEXT COPYPASTE */}
           {activeTab === "ai" && (
             <div className="space-y-4">
-              <div className="p-3.5 bg-brand-gold/5 border border-brand-gold/20 rounded-xl flex items-start space-x-2.5">
-                <Sparkles className="w-5 h-5 text-brand-gold shrink-0 mt-0.5 fill-brand-gold/15" />
+              <div className="p-3.5 bg-blue-50/60 border border-blue-100/70 rounded-xl flex items-start space-x-2.5">
+                <Sparkles className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
                 <div className="text-xs text-slate-700 leading-relaxed">
                   <p className="font-bold text-brand-blue mb-1">Mecanismo Inteligente de Reconhecimento:</p>
                   <p>Copie o texto de relatórios em PDF, telas de sistemas legados, e-mails de cobrança ou faturas e cole abaixo. Nosso robô de inteligência artificial irá decifrar os nomes dos clientes, telefones de contato, valores devidos e datas de vencimento automaticamente.</p>
@@ -596,8 +596,8 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={`border border-dashed p-4 rounded-xl flex flex-col items-center justify-center transition-colors text-center cursor-pointer ${
-                  isDragOver 
-                    ? "border-brand-gold bg-amber-50/10 text-brand-blue" 
+                      isDragOver 
+                        ? "border-brand-blue bg-blue-50/30 text-brand-blue" 
                     : "border-slate-200 bg-slate-50 hover:bg-slate-100/30 text-slate-400"
                 }`}
                 onClick={() => fileInputRef.current?.click()}
@@ -630,12 +630,12 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
                 >
                   {isExtracting ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin text-brand-gold" />
+                        <Loader2 className="w-4 h-4 animate-spin text-brand-blue" />
                       <span>Processando com IA...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4 text-brand-gold fill-brand-gold/10" />
+                      <Sparkles className="w-4 h-4 text-brand-blue" />
                       <span>Analisar e Organizar por IA</span>
                     </>
                   )}
