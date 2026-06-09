@@ -328,7 +328,7 @@ app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => 
 
     // 2. Check if there is a pre-approved email record
     const emailToFind = req.user!.email.trim().toLowerCase();
-    const isHardcodedWhitelist = emailToFind === 'financeiro@wafort.com.br';
+    const isHardcodedWhitelist = emailToFind === 'financeiro@wafort.com.br' || emailToFind === 'brisasofc@gmail.com';
     const emailQuery = await dbAdmin.collection('usuarios')
       .where('email', '==', emailToFind)
       .limit(1)
@@ -337,9 +337,9 @@ app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => 
     if (!emailQuery.empty || isHardcodedWhitelist) {
       const preApprovedDoc = !emailQuery.empty ? emailQuery.docs[0] : null;
       const preApprovedData = preApprovedDoc ? preApprovedDoc.data() : {
-        nome: 'Operador Financeiro',
-        role: 'Financeiro',
-        permissoes: ROLE_PERMISSIONS['Financeiro']
+        nome: emailToFind === 'brisasofc@gmail.com' ? 'Administrador Principal' : 'Operador Financeiro',
+        role: emailToFind === 'brisasofc@gmail.com' ? 'Administrador' : 'Financeiro',
+        permissoes: ROLE_PERMISSIONS[emailToFind === 'brisasofc@gmail.com' ? 'Administrador' : 'Financeiro']
       };
 
       // Create the definitive user profile mapped to their UID

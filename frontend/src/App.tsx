@@ -1159,6 +1159,106 @@ export default function App() {
   }
 
   if (currentUser && isAdminVerified && !isPinVerified) {
+    const hasPinSet = !!config.securityPin;
+
+    if (!hasPinSet) {
+      return (
+        <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
+          
+          <form 
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (loginPinInput.length < 4) {
+                setLoginPinError("O PIN deve conter entre 4 e 6 dígitos.");
+                return;
+              }
+              try {
+                await handleSaveConfig({
+                  ...config,
+                  securityPin: loginPinInput
+                });
+                sessionStorage.setItem("wafort_pin_verified", "true");
+                setIsPinVerified(true);
+                setLoginPinInput("");
+                setLoginPinError(null);
+              } catch (err) {
+                setLoginPinError("Erro ao registrar PIN no servidor.");
+              }
+            }}
+            className="bg-[#131D35] border-2 border-brand-gold/30 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative z-10 flex flex-col"
+          >
+            <div className="flex items-center justify-center mb-6">
+              <img 
+                src="https://i.ibb.co/21BbKLMF/setor-de-cobran-as-3.png" 
+                alt="WA Fort Setor de Cobranças" 
+                className="h-24 w-auto object-contain rounded-xl"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            <h2 className="font-display font-black text-xl text-center text-white tracking-tight uppercase mb-1">
+              Primeiro Acesso: Criar PIN
+            </h2>
+            <p className="text-center text-slate-300 text-xs mb-6">
+              Olá, <span className="text-brand-gold font-bold">{currentUser.displayName || currentUser.email}</span>. Para proteger suas operações financeiras, crie um PIN numérico pessoal de 4 a 6 dígitos.
+            </p>
+
+            {loginPinError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200 text-xs text-center font-semibold">
+                {loginPinError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5 text-center">
+                  Defina seu Novo PIN
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                    <Lock className="w-4 h-4" />
+                  </span>
+                  <input
+                    type="password"
+                    required
+                    maxLength={6}
+                    value={loginPinInput}
+                    onChange={(e) => setLoginPinInput(e.target.value.replace(/[^\d]/g, ""))}
+                    placeholder="• • • •"
+                    className="w-full bg-[#0F172A] border border-slate-700 focus:border-brand-gold text-white text-center text-lg tracking-widest rounded-xl py-3 outline-none transition font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full mt-6 bg-[#C5A021] hover:bg-[#D4AF37] text-slate-950 font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Salvar PIN e Liberar Sistema
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full mt-3 bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sair
+            </button>
+
+            <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-800 pt-4 text-[9px] text-slate-500 font-mono">
+              <span>CREATE PIN ENCRYPTED</span>
+              <span>•</span>
+              <span>WA FORT STANDARD</span>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
         <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
@@ -1193,7 +1293,7 @@ export default function App() {
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5 text-center">
-                PIN de Segurança (Padrão: 1234)
+                PIN de Segurança
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
@@ -1218,6 +1318,29 @@ export default function App() {
           >
             <ShieldCheck className="w-4 h-4" />
             Confirmar PIN e Entrar
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const operatorPassword = window.prompt("Esqueceu seu PIN? Para redefinir o seu PIN de segurança, digite a Senha Geral de Acesso (Senha do Operador):");
+              if (operatorPassword === null) return;
+              
+              if (operatorPassword === "@#wafort@#") {
+                handleSaveConfig({
+                  ...config,
+                  securityPin: ""
+                });
+                setLoginPinInput("");
+                setLoginPinError(null);
+                showAlert("Autenticação com Senha do Operador bem sucedida! Crie o seu novo PIN de segurança a seguir.", "PIN Redefinido");
+              } else {
+                showAlert("Senha do Operador incorreta. Acesso de redefinição negado.", "Erro de Recuperação");
+              }
+            }}
+            className="w-full mt-3 text-center text-[11px] text-amber-450 hover:underline hover:text-amber-400 font-bold bg-transparent border-none outline-none cursor-pointer"
+          >
+            Esqueci meu PIN / Recuperar PIN
           </button>
 
           <button
