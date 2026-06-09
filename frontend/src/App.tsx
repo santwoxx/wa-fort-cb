@@ -43,6 +43,7 @@ import { SummaryStats } from "./components/SummaryStats";
 import { ImportDebtors } from "./components/ImportDebtors";
 import { SettingsModal } from "./components/SettingsModal";
 import { ReportsModal } from "./components/ReportsModal";
+import { CashFlowModal } from "./components/CashFlowModal";
 import { 
   DEFAULT_CONFIG, 
   INITIAL_DEBTORS, 
@@ -93,6 +94,7 @@ export default function App() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
+  const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
   
   // Loading and generation flags
   const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
@@ -1563,11 +1565,23 @@ export default function App() {
               id="reports-trigger"
               onClick={() => setIsReportsModalOpen(true)}
               className="px-3 py-2 text-xs font-bold bg-[#EAB308]/15 hover:bg-[#EAB308]/25 border border-brand-gold/30 text-brand-gold hover:text-white rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
-              title="Baixar relatórios de créditos recuperados, taxas de sucesso e tabelas XLS"
+              title="Baixar relatórios de créditos recuperados e taxas de sucesso"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-brand-gold shrink-0 animate-pulse" />
-              <span>Relatórios & Caixa</span>
+              <FileSpreadsheet className="w-3.5 h-3.5 text-brand-gold shrink-0" />
+              <span>Relatórios</span>
             </button>
+
+            {hasPermission('Visualizar') && (
+              <button
+                id="cashflow-trigger"
+                onClick={() => setIsCashFlowModalOpen(true)}
+                className="px-3 py-2 text-xs font-bold bg-[#10B981]/15 hover:bg-[#10B981]/25 border border-emerald-500/30 text-emerald-400 hover:text-white rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                title="Visualizar fluxo de caixa, registrar entradas/saídas e estornos de caixa"
+              >
+                <Layers className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-pulse" />
+                <span>Fluxo de Caixa</span>
+              </button>
+            )}
             
             {hasPermission('Criar') && (
               <button
@@ -2187,6 +2201,16 @@ export default function App() {
           debtors={debtors}
           config={config}
           onClose={() => setIsReportsModalOpen(false)}
+        />
+      )}
+
+      {isCashFlowModalOpen && (
+        <CashFlowModal
+          onClose={() => setIsCashFlowModalOpen(false)}
+          userProfile={userProfile}
+          currentUser={currentUser}
+          showAlert={showAlert}
+          showConfirm={showConfirm}
         />
       )}
 

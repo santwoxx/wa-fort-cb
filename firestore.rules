@@ -117,5 +117,17 @@ service cloud.firestore {
       allow create, update: if isSignedIn() && getUserData().role == 'Administrador' && isValidUser(request.resource.data);
       allow delete: if isSignedIn() && getUserData().role == 'Administrador';
     }
+
+    // Cash Flow (Movimento de Caixa) collection
+    match /caixa/{movimentoId} {
+      allow read: if isSignedIn() && getUserData().permissoes.hasAny(['Visualizar']);
+      allow write: if false; // Only allowed via backend admin SDK
+    }
+
+    // Audit logs collection
+    match /auditoria/{logId} {
+      allow read: if isSignedIn() && getUserData().permissoes.hasAny(['Visualizar']);
+      allow write: if false; // Only allowed via backend admin SDK
+    }
   }
 }

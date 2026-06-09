@@ -503,4 +503,319 @@ app.delete("/api/users/:uid", requireAuth, requireRole('Administrador'), async (
   }
 });
 
+// --- HELPER FOR AUDIT LOGGING ---
+async function logAudit(
+  dbAdmin: any,
+  operadorId: string,
+  operadorNome: string,
+  acao: string,
+  entidadeId: string,
+  req: express.Request
+) {
+  try {
+    const ip = (req.headers['x-forwarded-for'] as string || req.ip || '127.0.0.1').split(',')[0].trim();
+    await dbAdmin.collection('auditoria').add({
+      operadorId,
+      operadorNome,
+      acao,
+      entidade: 'caixa',
+      entidadeId,
+      ip,
+      createdAt: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Falha ao gravar log de auditoria:', err);
+  }
+}
+
+// --- CASH FLOW (MOVIMENTO DE CAIXA) ENDPOINTS ---
+
+app.get("/api/caixa", requireAuth, requirePermission('Visualizar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (req.user?.isDemo) {
+      return res.json({
+        movements: [
+          { id: 'demo-m1', tipo: 'entrada', categoria: 'Serviços', descricao: 'Mensalidade Banda Larga Carlos', valor: 189.90, operadorId: 'demo-op', operadorNome: 'Operador Demo', dataMovimento: '2026-06-02', createdAt: '2026-06-02T14:00:00Z', status: 'ativo' },
+          { id: 'demo-m2', tipo: 'saida', categoria: 'Infraestrutura', descricao: 'Compra de cabos ópticos', valor: 350.00, operadorId: 'demo-op', operadorNome: 'Operador Demo', dataMovimento: '2026-06-02', createdAt: '2026-06-02T14:30:00Z', status: 'ativo' }
+        ]
+      });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    let query: any = dbAdmin.collection('caixa');
+    const { startDate, endDate, operadorId, status } = req.query;
+
+    if (startDate) {
+      query = query.where('dataMovimento', '>=', String(startDate));
+    }
+    if (endDate) {
+      query = query.where('dataMovimento', '<=', String(endDate));
+    }
+    if (operadorId) {
+      query = query.where('operadorId', '==', String(operadorId));
+    }
+    if (status) {
+      query = query.where('status', '==', String(status));
+    }
+
+    const snapshot = await query.get();
+    const movements: any[] = [];
+    snapshot.forEach((doc: any) => {
+      movements.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Sort in-memory to prevent complex indexing failures
+    movements.sort((a, b) => {
+      if (a.dataMovimento !== b.dataMovimento) {
+        return b.dataMovimento.localeCompare(a.dataMovimento);
+      }
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+
+    res.json({ movements });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/caixa/resumo", requireAuth, requirePermission('Visualizar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (req.user?.isDemo) {
+      return res.json({
+        saldoAtual: 2450.50,
+        entradasHoje: 389.90,
+        saidasHoje: 120.00,
+        fluxoMensal: 2330.50
+      });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentMonthStr = todayStr.substring(0, 7);
+
+    const snapshot = await dbAdmin.collection('caixa').where('status', '==', 'ativo').get();
+    
+    let saldoAtual = 0;
+    let entradasHoje = 0;
+    let saidasHoje = 0;
+    let fluxoMensal = 0;
+
+    snapshot.forEach((doc: any) => {
+      const data = doc.data();
+      const val = data.valor || 0;
+      const tipo = data.tipo;
+      const dataMov = data.dataMovimento || '';
+
+      if (tipo === 'entrada') {
+        saldoAtual += val;
+        if (dataMov === todayStr) {
+          entradasHoje += val;
+        }
+        if (dataMov.startsWith(currentMonthStr)) {
+          fluxoMensal += val;
+        }
+      } else if (tipo === 'saida') {
+        saldoAtual -= val;
+        if (dataMov === todayStr) {
+          saidasHoje += val;
+        }
+        if (dataMov.startsWith(currentMonthStr)) {
+          fluxoMensal -= val;
+        }
+      }
+    });
+
+    res.json({
+      saldoAtual,
+      entradasHoje,
+      saidasHoje,
+      fluxoMensal
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/caixa/entrada", requireAuth, requirePermission('Criar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { categoria, descricao, valor, dataMovimento } = req.body;
+    if (!categoria || !descricao || !valor || !dataMovimento) {
+      return res.status(400).json({ error: 'Campos obrigatórios ausentes: categoria, descricao, valor, dataMovimento.' });
+    }
+
+    if (req.user?.isDemo) {
+      return res.json({ success: true, message: 'Entrada registrada em modo de simulação.' });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const newMov = {
+      tipo: 'entrada',
+      categoria,
+      descricao,
+      valor: Number(valor),
+      operadorId: req.user!.uid,
+      operadorNome: req.user!.nome || 'Operador',
+      dataMovimento,
+      createdAt: new Date().toISOString(),
+      status: 'ativo'
+    };
+
+    const docRef = await dbAdmin.collection('caixa').add(newMov);
+    await logAudit(dbAdmin, req.user!.uid, req.user!.nome || 'Operador', 'REGISTRAR_ENTRADA', docRef.id, req);
+
+    res.json({ success: true, id: docRef.id });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/caixa/saida", requireAuth, requirePermission('Criar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { categoria, descricao, valor, dataMovimento } = req.body;
+    if (!categoria || !descricao || !valor || !dataMovimento) {
+      return res.status(400).json({ error: 'Campos obrigatórios ausentes: categoria, descricao, valor, dataMovimento.' });
+    }
+
+    if (req.user?.isDemo) {
+      return res.json({ success: true, message: 'Saída registrada em modo de simulação.' });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const newMov = {
+      tipo: 'saida',
+      categoria,
+      descricao,
+      valor: Number(valor),
+      operadorId: req.user!.uid,
+      operadorNome: req.user!.nome || 'Operador',
+      dataMovimento,
+      createdAt: new Date().toISOString(),
+      status: 'ativo'
+    };
+
+    const docRef = await dbAdmin.collection('caixa').add(newMov);
+    await logAudit(dbAdmin, req.user!.uid, req.user!.nome || 'Operador', 'REGISTRAR_SAIDA', docRef.id, req);
+
+    res.json({ success: true, id: docRef.id });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/caixa/transferencia", requireAuth, requirePermission('Criar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { categoria, descricao, valor, dataMovimento } = req.body;
+    if (!categoria || !descricao || !valor || !dataMovimento) {
+      return res.status(400).json({ error: 'Campos obrigatórios ausentes: categoria, descricao, valor, dataMovimento.' });
+    }
+
+    if (req.user?.isDemo) {
+      return res.json({ success: true, message: 'Transferência registrada em modo de simulação.' });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const newMov = {
+      tipo: 'transferencia',
+      categoria,
+      descricao,
+      valor: Number(valor),
+      operadorId: req.user!.uid,
+      operadorNome: req.user!.nome || 'Operador',
+      dataMovimento,
+      createdAt: new Date().toISOString(),
+      status: 'ativo'
+    };
+
+    const docRef = await dbAdmin.collection('caixa').add(newMov);
+    await logAudit(dbAdmin, req.user!.uid, req.user!.nome || 'Operador', 'REGISTRAR_TRANSFERENCIA', docRef.id, req);
+
+    res.json({ success: true, id: docRef.id });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/caixa/:movimentoId/estorno", requireAuth, requirePermission('Aprovar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { movimentoId } = req.params;
+
+    if (req.user?.isDemo) {
+      return res.json({ success: true, message: 'Movimentação estornada em modo de simulação.' });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const docRef = dbAdmin.collection('caixa').doc(movimentoId);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: 'Movimentação de caixa não encontrada.' });
+    }
+
+    const currentData = docSnap.data();
+    if (currentData?.status === 'estornado') {
+      return res.status(400).json({ error: 'Esta movimentação já foi estornada anteriormente.' });
+    }
+
+    await docRef.update({ status: 'estornado' });
+    await logAudit(dbAdmin, req.user!.uid, req.user!.nome || 'Operador', 'ESTORNAR_MOVIMENTO', movimentoId, req);
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/caixa/auditoria", requireAuth, requirePermission('Visualizar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (req.user?.isDemo) {
+      return res.json({
+        logs: [
+          { id: 'demo-log1', operadorId: 'demo-op', operadorNome: 'Operador Demo', acao: 'REGISTRAR_ENTRADA', entidade: 'caixa', entidadeId: 'demo-m1', ip: '127.0.0.1', createdAt: '2026-06-02T14:00:00Z' }
+        ]
+      });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const snapshot = await dbAdmin.collection('auditoria').get();
+    const logs: any[] = [];
+    snapshot.forEach((doc: any) => {
+      logs.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Sort in-memory
+    logs.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+    res.json({ logs });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default app;
