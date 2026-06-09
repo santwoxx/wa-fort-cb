@@ -1,10 +1,4 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 export type DebtStatus = 'pending' | 'notified' | 'negotiating' | 'paid';
-
 export type CollectionTone = 'friendly' | 'formal' | 'urgent' | 'negotiation';
 
 export interface Debtor {
@@ -32,9 +26,10 @@ export interface CollectionSummary {
 export interface AppConfig {
   companyName: string;
   customSignature: string;
-  paymentMethods: string; // e.g. "Pix, Boleto Bancário"
+  paymentMethods: string;
   pixKey?: string;
   securityPin?: string;
+  securityPinHash?: string;
   promptFriendly?: string;
   promptFormal?: string;
   promptUrgent?: string;
@@ -45,9 +40,7 @@ export interface AppConfig {
   templateNegotiation?: string;
 }
 
-// --- RBAC TYPES & ROLES ---
 export type UserRole = 'Administrador' | 'Financeiro' | 'Operador' | 'Supervisor' | 'Auditor';
-
 export type UserPermission = 'Visualizar' | 'Criar' | 'Editar' | 'Excluir' | 'Aprovar';
 
 export interface UserProfile {
@@ -56,6 +49,7 @@ export interface UserProfile {
   email: string;
   role: UserRole;
   permissoes: UserPermission[];
+  empresaId?: string;
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
@@ -66,3 +60,106 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
   Auditor: ['Visualizar']
 };
 
+// FASE 2: Tipos do módulo financeiro
+export type FinancialStatus = 'ativo' | 'cancelado' | 'estornado' | 'arquivado';
+export type DuplicataStatus = 'Pendente' | 'Pago' | 'Vencido' | 'Cancelado' | 'Negociado' | 'Estornado' | 'Arquivado';
+export type CaixaTipo = 'entrada' | 'saida' | 'transferencia';
+
+export interface MovimentoCaixa {
+  id: string;
+  tipo: CaixaTipo;
+  categoria: string;
+  descricao: string;
+  valor: number;
+  operadorId: string;
+  operadorNome: string;
+  dataMovimento: string;
+  empresaId: string;
+  status: FinancialStatus;
+  createdAt: string;
+  createdBy: string;
+  createdByName: string;
+}
+
+export interface Duplicata {
+  id: string;
+  clienteId: string;
+  clienteNome: string;
+  clienteDocumento: string;
+  numeroDuplicata: string;
+  descricao: string;
+  valor: number;
+  vencimento: string;
+  status: DuplicataStatus;
+  observacoes: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  empresaId: string;
+  pixCopiaECola?: string;
+  boletoBarCode?: string;
+}
+
+export interface Pagamento {
+  id: string;
+  duplicataId: string;
+  duplicataNumero: string;
+  clienteId: string;
+  clienteNome: string;
+  valorPago: number;
+  valorOriginal: number;
+  dataPagamento: string;
+  formaPagamento: string;
+  conciliado: boolean;
+  conciliadoPor?: string;
+  conciliadoEm?: string;
+  empresaId: string;
+  status: FinancialStatus;
+  createdAt: string;
+}
+
+export interface LancamentoFinanceiro {
+  id: string;
+  tipo: 'receita' | 'despesa' | 'transferencia';
+  categoria: string;
+  descricao: string;
+  valor: number;
+  dataLancamento: string;
+  centroCusto?: string;
+  empresaId: string;
+  status: FinancialStatus;
+  createdAt: string;
+}
+
+export interface NotaFiscal {
+  id: string;
+  numeroNota: string;
+  serie: string;
+  clienteId: string;
+  clienteNome: string;
+  clienteDocumento: string;
+  valor: number;
+  dataEmissao: string;
+  dataVencimento: string;
+  descricao: string;
+  tipoNota: 'NFS-e' | 'NF-e' | 'NFC-e';
+  chaveAcesso?: string;
+  empresaId: string;
+  status: FinancialStatus;
+  createdAt: string;
+}
+
+export interface AuditoriaLog {
+  id: string;
+  entidade: string;
+  entidadeId: string;
+  acao: string;
+  operadorId: string;
+  operadorNome: string;
+  ip: string;
+  userAgent: string;
+  dadosAnteriores: any;
+  dadosNovos: any;
+  empresaId: string;
+  createdAt: string;
+}

@@ -15,43 +15,40 @@ export function initializeFirebaseAdmin() {
   if (isInitialized) return { db, auth };
 
   try {
-    // Check if Firebase service account environment variable is set
     const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
-    
+
     if (serviceAccountVar) {
       const serviceAccount = JSON.parse(serviceAccountVar);
       initializeApp({
         credential: cert(serviceAccount)
       });
-      console.log("[Firebase Admin] Initialized with env service account.");
+      console.log('[Firebase Admin] Initialized with env service account.');
       isInitialized = true;
     } else {
-      // Try to find a local service account file if it exists (for local dev)
       const serviceAccountPath = path.join(process.cwd(), 'firebase-service-account.json');
       if (fs.existsSync(serviceAccountPath)) {
         const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
         initializeApp({
           credential: cert(serviceAccount)
         });
-        console.log("[Firebase Admin] Initialized with local json file.");
+        console.log('[Firebase Admin] Initialized with local json file.');
         isInitialized = true;
       } else {
-        // Safe check using app config variables
         const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
         if (fs.existsSync(configPath)) {
           const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
           initializeApp({
             projectId: config.projectId
           });
-          console.log("[Firebase Admin] Initialized dynamically with applet config projectId.");
+          console.log('[Firebase Admin] Initialized dynamically with applet config projectId.');
           isInitialized = true;
         } else {
-          console.warn("[Firebase Admin] WARNING: Firebase credentials not found. API endpoints will use mock auth fallbacks for development.");
+          console.warn('[Firebase Admin] WARNING: Firebase credentials not found.');
         }
       }
     }
   } catch (error) {
-    console.error("[Firebase Admin] Initialization failed:", error);
+    console.error('[Firebase Admin] Initialization failed:', error);
   }
 
   if (isInitialized) {
@@ -70,4 +67,35 @@ export function getFirestoreAdmin() {
 export function getAuthAdmin() {
   const { auth } = initializeFirebaseAdmin();
   return auth;
+}
+
+// FASE 1: Firebase Custom Claims - Função administrativa para atualizar Claims
+export async function setCustomUserClaims(
+  uid: string,
+  role: string,
+  permissions: string[],
+  empresaId?: string
+) {
+  const authAdmin = getAuthAdmin();
+  if (authAdmin) {
+    await authAdmin.setCustomUserClaims(uid, {
+      role,
+      permissoes: permissions,
+      empresaId: empresaId || 'empresa-default'
+    });
+    console.log(`[Custom Claims] Updated for user ${uid}: role=${role}, empresaId=${empresaId}`);
+  }
+}
+
+// FASE 1: Forçar renovação de token (faz o client reobter token com novas claims)
+export async function forceTokenRefresh(uid: string) {
+  const authAdmin = getAuthAdmin();
+  if (authAdmin) {
+    try {
+      await authAdmin.revokeRefreshTokens(uid);
+      console.log(`[Custom Claims] Refresh tokens revoked for user ${uid} - client must re-auth`);
+    } catch (err) {
+      console.error(`[Custom Claims] Error revoking tokens for ${uid}:`, err);
+    }
+  }
 }

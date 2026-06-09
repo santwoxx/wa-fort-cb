@@ -44,6 +44,7 @@ import { ImportDebtors } from "./components/ImportDebtors";
 import { SettingsModal } from "./components/SettingsModal";
 import { ReportsModal } from "./components/ReportsModal";
 import { CashFlowModal } from "./components/CashFlowModal";
+import { DuplicatasModal } from "./components/DuplicatasModal";
 import { 
   DEFAULT_CONFIG, 
   INITIAL_DEBTORS, 
@@ -95,6 +96,7 @@ export default function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
   const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
+  const [isDuplicatasModalOpen, setIsDuplicatasModalOpen] = useState(false);
   
   // Loading and generation flags
   const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
@@ -183,6 +185,12 @@ export default function App() {
         if (res.ok && contentType && contentType.includes("application/json")) {
           const data = await res.json();
           setUserProfile(data.user);
+
+          // FASE 1: Se o backend solicitar refresh de token, força renovação
+          if (data.refreshRequired) {
+            console.log('[Auth] Refresh token required - forcing token renewal');
+            await currentUser.getIdToken(true);
+          }
         } else {
           console.error("Servidor retornou resposta inválida ou erro.");
           let errMsg = `Servidor retornou código ${res.status}.`;
@@ -374,20 +382,43 @@ export default function App() {
     }
   };
 
-  const handleLoginPinSubmit = (e: React.FormEvent) => {
+  const handleLoginPinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const correctPin = config.securityPin || "1234";
-    if (loginPinInput === correctPin) {
-      sessionStorage.setItem("wafort_pin_verified", "true");
-      setIsPinVerified(true);
-      setLoginPinError(null);
-    } else {
-      setLoginPinError("PIN de segurança incorreto.");
+    setLoginPinError(null);
+    try {
+      const token = currentUser?.isDemo ? 'demo-token-admin' : await currentUser!.getIdToken();
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (!currentUser?.isDemo) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${API_URL}/api/security/verify-pin`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ pin: loginPinInput })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          sessionStorage.setItem("wafort_pin_verified", "true");
+          setIsPinVerified(true);
+          setLoginPinError(null);
+        } else {
+          setLoginPinError("PIN de segurança incorreto.");
+        }
+      } else {
+        setLoginPinError("Erro ao verificar PIN no servidor.");
+      }
+    } catch (err) {
+      setLoginPinError("Erro de conexão ao verificar PIN.");
     }
   };
 
   // Wrap setConfig to write edits directly to users Firestore config
   const handleSaveConfig = async (newConfig: AppConfig) => {
+    // FASE 6: Remove campos sensíveis que devem ser tratados apenas via backend
+    const { securityPin, securityPinHash, ...safeConfig } = newConfig;
+    const configToSave = safeConfig as AppConfig;
+
     setConfig(newConfig);
     if (currentUser) {
       if (currentUser.isDemo) {
@@ -396,7 +427,7 @@ export default function App() {
       }
       try {
         const configRef = doc(db, "users", currentUser.uid, "config", "main");
-        await setDoc(configRef, newConfig);
+        await setDoc(configRef, configToSave);
       } catch (err) {
         handleFirestoreError(err, OperationType.WRITE, `users/${currentUser.uid}/config/main`);
       }
@@ -466,15 +497,38 @@ export default function App() {
       } else if (e.key === "Backspace") {
         setPinInput(prev => prev.slice(0, -1));
       } else if (e.key === "Enter") {
-        // Trigger verification manually
-        const correctPin = config.securityPin || "1234";
-        if (pinInput === correctPin) {
-          setIsTerminalLocked(false);
-          setPinInput("");
-          setPinError(null);
-        } else {
-          setPinError("PIN operacional de segurança incorreto. Tente novamente.");
-          setPinInput("");
+        // Trigger verification via backend API
+        setPinError(null);
+        const token = currentUser?.isDemo ? 'demo-token-admin' : null;
+        if (!currentUser?.isDemo && currentUser) {
+          currentUser.getIdToken().then(t => {
+            fetch(`${API_URL}/api/security/verify-pin`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}` },
+              body: JSON.stringify({ pin: pinInput })
+            }).then(r => r.json()).then(data => {
+              if (data.success) {
+                setIsTerminalLocked(false);
+                setPinInput("");
+                setPinError(null);
+              } else {
+                setPinError("PIN operacional de segurança incorreto. Tente novamente.");
+                setPinInput("");
+              }
+            }).catch(() => {
+              setPinError("Erro de conexão ao verificar PIN.");
+              setPinInput("");
+            });
+          });
+        } else if (currentUser?.isDemo) {
+          if (pinInput === '1234') {
+            setIsTerminalLocked(false);
+            setPinInput("");
+            setPinError(null);
+          } else {
+            setPinError("PIN incorreto.");
+            setPinInput("");
+          }
         }
       } else if (e.key === "Escape") {
         setPinInput("");
@@ -928,16 +982,37 @@ export default function App() {
     setTimeout(() => setCopyFeedback(false), 2000);
   };
 
-  // Safe handler to unlock financial workstation
-  const handleUnlockTerminal = (e?: React.FormEvent) => {
+  // Safe handler to unlock financial workstation (uses backend API)
+  const handleUnlockTerminal = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const correctPin = config.securityPin || "1234";
-    if (pinInput === correctPin) {
-      setIsTerminalLocked(false);
-      setPinInput("");
-      setPinError(null);
-    } else {
-      setPinError("PIN operacional de segurança incorreto. Tente novamente.");
+    setPinError(null);
+    try {
+      const token = currentUser?.isDemo ? 'demo-token-admin' : await currentUser!.getIdToken();
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (!currentUser?.isDemo) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${API_URL}/api/security/verify-pin`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ pin: pinInput })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setIsTerminalLocked(false);
+          setPinInput("");
+          setPinError(null);
+        } else {
+          setPinError("PIN operacional de segurança incorreto. Tente novamente.");
+          setPinInput("");
+        }
+      } else {
+        setPinError("Erro ao verificar PIN no servidor.");
+        setPinInput("");
+      }
+    } catch (err) {
+      setPinError("Erro de conexão ao verificar PIN.");
       setPinInput("");
     }
   };
@@ -1266,14 +1341,25 @@ export default function App() {
                 return;
               }
               try {
-                await handleSaveConfig({
-                  ...config,
-                  securityPin: loginPinInput
+                const token = currentUser?.isDemo ? 'demo-token-admin' : await currentUser!.getIdToken();
+                const headers: any = { 'Content-Type': 'application/json' };
+                if (!currentUser?.isDemo) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch(`${API_URL}/api/security/set-pin`, {
+                  method: 'POST',
+                  headers,
+                  body: JSON.stringify({ pin: loginPinInput })
                 });
-                sessionStorage.setItem("wafort_pin_verified", "true");
-                setIsPinVerified(true);
-                setLoginPinInput("");
-                setLoginPinError(null);
+
+                if (res.ok) {
+                  sessionStorage.setItem("wafort_pin_verified", "true");
+                  setIsPinVerified(true);
+                  setLoginPinInput("");
+                  setLoginPinError(null);
+                } else {
+                  const data = await res.json();
+                  setLoginPinError(data.error || "Erro ao registrar PIN no servidor.");
+                }
               } catch (err) {
                 setLoginPinError("Erro ao registrar PIN no servidor.");
               }
@@ -1570,6 +1656,18 @@ export default function App() {
               <FileSpreadsheet className="w-3.5 h-3.5 text-brand-gold shrink-0" />
               <span>Relatórios</span>
             </button>
+
+            {hasPermission('Visualizar') && (
+              <button
+                id="duplicatas-trigger"
+                onClick={() => setIsDuplicatasModalOpen(true)}
+                className="px-3 py-2 text-xs font-bold bg-[#C5A021]/15 hover:bg-[#C5A021]/25 border border-[#C5A021]/30 text-brand-gold hover:text-white rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                title="Visualizar e gerenciar duplicatas comerciais, boletos e pagamentos Pix"
+              >
+                <FileCheck className="w-3.5 h-3.5 text-brand-gold shrink-0" />
+                <span>Duplicatas</span>
+              </button>
+            )}
 
             {hasPermission('Visualizar') && (
               <button
@@ -2207,6 +2305,16 @@ export default function App() {
       {isCashFlowModalOpen && (
         <CashFlowModal
           onClose={() => setIsCashFlowModalOpen(false)}
+          userProfile={userProfile}
+          currentUser={currentUser}
+          showAlert={showAlert}
+          showConfirm={showConfirm}
+        />
+      )}
+
+      {isDuplicatasModalOpen && (
+        <DuplicatasModal
+          onClose={() => setIsDuplicatasModalOpen(false)}
           userProfile={userProfile}
           currentUser={currentUser}
           showAlert={showAlert}
