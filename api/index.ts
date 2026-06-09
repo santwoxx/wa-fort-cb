@@ -1,6 +1,9 @@
 import express from "express";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import { requireAuth, requirePermission, AuthenticatedRequest } from "./rbacMiddleware";
+import { getFirestoreAdmin } from "./backendAuth";
+import { ROLE_PERMISSIONS } from "../src/types";
 
 // Load environment variables
 dotenv.config();
@@ -87,7 +90,7 @@ function getFallbackMessage(
 }
 
 // REST Endpoint to extract debtors from unstructured text
-app.post("/api/extract-debtors", async (req, res) => {
+app.post("/api/extract-debtors", requireAuth, requirePermission('Criar'), async (req: AuthenticatedRequest, res) => {
   try {
     const { text } = req.body;
     if (!text || !text.trim()) {
@@ -180,7 +183,7 @@ ${text}
 });
 
 // REST Endpoint to generate collection message
-app.post("/api/generate-message", async (req, res) => {
+app.post("/api/generate-message", requireAuth, requirePermission('Editar'), async (req: AuthenticatedRequest, res) => {
   try {
     const { 
       name, 
@@ -291,6 +294,112 @@ ${customSignature ? `- Assinatura personalizada a incluir no final: ${customSign
   } catch (error: any) {
     console.error("Gemini API server error:", error);
     res.status(500).json({ error: error?.message || "Internal server error" });
+  }
+});
+
+// User profile synchronization and RBAC management API endpoints
+app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (req.user?.isDemo) {
+      return res.json({ user: req.user });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const userDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
+    if (!userDoc.exists) {
+      const allUsersSnap = await dbAdmin.collection('usuarios').limit(1).get();
+      const role = allUsersSnap.empty ? 'Administrador' : 'Operador';
+      const defaultPermissions = ROLE_PERMISSIONS[role];
+      
+      const newProfile = {
+        nome: req.user!.nome || 'Novo Operador',
+        email: req.user!.email,
+        role,
+        permissoes: defaultPermissions
+      };
+
+      await dbAdmin.collection('usuarios').doc(req.user!.uid).set(newProfile);
+      return res.json({ user: { uid: req.user!.uid, ...newProfile } });
+    }
+
+    res.json({ user: { uid: req.user!.uid, ...userDoc.data() } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/users", requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (req.user?.isDemo) {
+      if (req.user.role !== 'Administrador') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem listar usuários.' });
+      }
+      return res.json({
+        users: [
+          { uid: 'demo-user-admin', nome: 'Operador Demonstrativo (Admin)', email: 'admin@wa-fort.com', role: 'Administrador', permissoes: ROLE_PERMISSIONS['Administrador'] },
+          { uid: 'demo-user-financeiro', nome: 'Financeiro Demonstrativo', email: 'financeiro@wa-fort.com', role: 'Financeiro', permissoes: ROLE_PERMISSIONS['Financeiro'] },
+          { uid: 'demo-user-operador', nome: 'Operador Demonstrativo', email: 'operador@wa-fort.com', role: 'Operador', permissoes: ROLE_PERMISSIONS['Operador'] },
+          { uid: 'demo-user-supervisor', nome: 'Supervisor Demonstrativo', email: 'supervisor@wa-fort.com', role: 'Supervisor', permissoes: ROLE_PERMISSIONS['Supervisor'] },
+          { uid: 'demo-user-auditor', nome: 'Auditor Demonstrativo', email: 'auditor@wa-fort.com', role: 'Auditor', permissoes: ROLE_PERMISSIONS['Auditor'] }
+        ]
+      });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const callerDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
+    if (!callerDoc.exists || callerDoc.data()?.role !== 'Administrador') {
+      return res.status(403).json({ error: 'Acesso negado. Apenas Administradores podem acessar esta área.' });
+    }
+
+    const snapshot = await dbAdmin.collection('usuarios').get();
+    const users: any[] = [];
+    snapshot.forEach(doc => {
+      users.push({ uid: doc.id, ...doc.data() });
+    });
+    res.json({ users });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/users/:uid", requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { uid } = req.params;
+    const { role, permissoes } = req.body;
+
+    if (req.user?.isDemo) {
+      if (req.user.role !== 'Administrador') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem gerenciar usuários.' });
+      }
+      return res.json({ success: true, message: 'Perfil atualizado em modo de simulação.' });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const callerDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
+    if (!callerDoc.exists || callerDoc.data()?.role !== 'Administrador') {
+      return res.status(403).json({ error: 'Acesso negado. Apenas Administradores podem gerenciar perfis.' });
+    }
+
+    await dbAdmin.collection('usuarios').doc(uid).update({
+      role,
+      permissoes
+    });
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 

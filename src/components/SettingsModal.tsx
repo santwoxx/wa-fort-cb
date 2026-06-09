@@ -5,15 +5,17 @@
 
 import React, { useState } from "react";
 import { Settings, X, Save, AlertCircle, Sparkles, Sliders, DollarSign, MessageSquare } from "lucide-react";
-import { AppConfig } from "../types";
+import { AppConfig, UserProfile, UserRole, UserPermission, ROLE_PERMISSIONS } from "../types";
 
 interface SettingsModalProps {
   config: AppConfig;
   onSave: (newConfig: AppConfig) => void;
   onClose: () => void;
+  userProfile: UserProfile | null;
+  currentUser: any;
 }
 
-export function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
+export function SettingsModal({ config, onSave, onClose, userProfile, currentUser }: SettingsModalProps) {
   const [companyName, setCompanyName] = useState(config.companyName);
   const [customSignature, setCustomSignature] = useState(config.customSignature);
   const [paymentMethods, setPaymentMethods] = useState(config.paymentMethods);
@@ -56,7 +58,67 @@ export function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
     "Olá, {{cliente}}! 🤝\n\nEstamos entrando em contato pois valorizamos imensamente a nossa parceria e o seu relacionamento com a *{{empresa}}*. \n\nNotamos que a fatura de *{{servico}}* no valor de *{{valor}}* (vencida em *{{vencimento}}*) ainda consta pendente em nosso sistema. Queremos apoiar você a colocar suas contas em dia sem pesar no seu orçamento! \n\nPor isso, preparamos condições facilitadas de parcelamento ou desconto para quitação à vista. Vamos conversar e achar a melhor proposta juntos?\n\nPara quitação imediata, utilize a nossa chave Pix:\n🔑 `{{chave_pix}}`\n\nResponda a esta mensagem dizendo qual a melhor forma de negociarmos para você. Estamos prontos para te ajudar!\n\nAtenciosamente,\n*Setor de Acordos e Conciliation - {{empresa}}*"
   );
 
-  const [activeTab, setActiveTab] = useState<'finance' | 'tones' | 'templates'>('finance');
+  const [activeTab, setActiveTab] = useState<'finance' | 'tones' | 'templates' | 'rbac'>('finance');
+
+  // RBAC User list and update states
+  const [usersList, setUsersList] = useState<UserProfile[]>([]);
+  const [isUsersLoading, setIsUsersLoading] = useState(false);
+  const [userActionFeedback, setUserActionFeedback] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (activeTab === 'rbac' && userProfile?.role === 'Administrador') {
+      const fetchUsers = async () => {
+        setIsUsersLoading(true);
+        try {
+          const token = currentUser.isDemo 
+            ? `demo-token-${userProfile.role}` 
+            : await currentUser.getIdToken();
+          const res = await fetch("/api/users", {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setUsersList(data.users || []);
+          }
+        } catch (err) {
+          console.error("Erro ao carregar usuários:", err);
+        } finally {
+          setIsUsersLoading(false);
+        }
+      };
+      fetchUsers();
+    }
+  }, [activeTab, userProfile, currentUser]);
+
+  const handleUpdateUser = async (targetUid: string, updatedRole: UserRole, updatedPermissions: UserPermission[]) => {
+    setUserActionFeedback("Salvando...");
+    try {
+      const token = currentUser.isDemo 
+        ? `demo-token-${userProfile?.role}` 
+        : await currentUser.getIdToken();
+        
+      const res = await fetch(`/api/users/${targetUid}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ role: updatedRole, permissoes: updatedPermissions })
+      });
+
+      if (res.ok) {
+        setUserActionFeedback("Usuário atualizado!");
+        setUsersList(prev => prev.map(u => u.uid === targetUid ? { ...u, role: updatedRole, permissoes: updatedPermissions } : u));
+      } else {
+        const errorData = await res.json();
+        setUserActionFeedback(`Erro: ${errorData.error || 'Falha ao salvar'}`);
+      }
+    } catch (err) {
+      setUserActionFeedback("Erro ao atualizar usuário.");
+    } finally {
+      setTimeout(() => setUserActionFeedback(null), 3000);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +203,21 @@ export function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
             <Sparkles className="w-3 h-3 text-brand-gold" />
             Personalidade da IA
           </button>
+
+          {userProfile?.role === 'Administrador' && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('rbac')}
+              className={`px-3 py-2 text-xs font-bold transition flex items-center gap-1 border-b-2 ${
+                activeTab === 'rbac'
+                  ? 'border-[#1E3A8A] text-[#1E3A8A]'
+                  : 'border-transparent text-indigo-400 hover:text-indigo-700'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5 text-indigo-650 shrink-0" />
+              Controle de Acesso 🔒
+            </button>
+          )}
         </div>
 
         {/* Form Body */}
@@ -359,6 +436,90 @@ export function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs leading-normal focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/10 font-sans"
                   />
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'rbac' && (
+              <div className="space-y-4">
+                <div className="p-3 bg-indigo-50/50 border border-indigo-150 rounded-xl flex items-start space-x-2">
+                  <Sliders className="w-4 h-4 text-indigo-800 shrink-0 mt-0.5" />
+                  <div>
+                    <h5 className="text-xs font-bold text-indigo-900">Gerenciamento de Perfis & Permissões (RBAC)</h5>
+                    <p className="text-[10px] text-slate-500 leading-normal mt-0.5">
+                      Como administrador, você pode alterar a função de cada operador e habilitar/desabilitar permissões específicas para restrição de rotas e interface.
+                    </p>
+                  </div>
+                </div>
+
+                {userActionFeedback && (
+                  <div className="p-2 text-xs font-bold text-center bg-indigo-100 text-indigo-800 rounded-lg">
+                    {userActionFeedback}
+                  </div>
+                )}
+
+                {isUsersLoading ? (
+                  <div className="text-center py-6 text-slate-500 text-xs">Carregando operadores cadastrados...</div>
+                ) : (
+                  <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1">
+                    {usersList.length === 0 ? (
+                      <div className="text-center py-4 text-slate-400 text-xs">Nenhum outro usuário registrado no banco.</div>
+                    ) : (
+                      usersList.map((user) => (
+                        <div key={user.uid} className="border border-slate-100 rounded-xl p-3 bg-slate-50/30 flex flex-col gap-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="text-xs font-bold text-slate-800">{user.nome}</span>
+                              <span className="block text-[10px] text-slate-400 font-mono">{user.email}</span>
+                            </div>
+                            
+                            {/* Role Selector */}
+                            <select
+                              value={user.role}
+                              onChange={(e) => {
+                                const newRole = e.target.value as UserRole;
+                                const newPerms = ROLE_PERMISSIONS[newRole];
+                                handleUpdateUser(user.uid, newRole, newPerms);
+                              }}
+                              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg px-2 py-1 font-bold outline-none cursor-pointer"
+                            >
+                              <option value="Administrador">Administrador</option>
+                              <option value="Supervisor">Supervisor</option>
+                              <option value="Financeiro">Financeiro</option>
+                              <option value="Operador">Operador</option>
+                              <option value="Auditor">Auditor</option>
+                            </select>
+                          </div>
+
+                          {/* Permissions Checkbox Grid */}
+                          <div className="mt-2 pt-2 border-t border-slate-100">
+                            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Permissões Específicas:</span>
+                            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-1.5">
+                              {(['Visualizar', 'Criar', 'Editar', 'Excluir', 'Aprovar'] as UserPermission[]).map((p) => {
+                                const hasPerm = user.permissoes.includes(p);
+                                return (
+                                  <label key={p} className="flex items-center gap-1.5 cursor-pointer text-[10px] text-slate-650 font-medium select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={hasPerm}
+                                      onChange={() => {
+                                        const newPerms = hasPerm
+                                          ? user.permissoes.filter(x => x !== p)
+                                          : [...user.permissoes, p];
+                                        handleUpdateUser(user.uid, user.role, newPerms);
+                                      }}
+                                      className="rounded text-[#1E3A8A] focus:ring-[#1E3A8A]/20"
+                                    />
+                                    <span>{p}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

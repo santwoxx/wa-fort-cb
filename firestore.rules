@@ -20,9 +20,15 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    // Get user document helper
+    function getUserData() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
     // Strict validation schemas
     function isValidDebtor(data) {
-      return data.name is string && data.name.size() <= 150
+      return data.keys().hasOnly(['name', 'phone', 'amount', 'dueDate', 'daysOverdue', 'description', 'status', 'tone', 'customMessage'])
+          && data.name is string && data.name.size() <= 150
           && data.phone is string && data.phone.size() <= 30
           && data.amount is number && data.amount >= 0
           && data.dueDate is string && data.dueDate.size() <= 20
@@ -34,43 +40,77 @@ service cloud.firestore {
     }
 
     function isValidConfig(data) {
-      return data.companyName is string && data.companyName.size() <= 100
+      return data.keys().hasOnly([
+            'companyName', 'customSignature', 'paymentMethods', 'pixKey', 'securityPin',
+            'promptFriendly', 'promptFormal', 'promptUrgent', 'promptNegotiation',
+            'templateFriendly', 'templateFormal', 'templateUrgent', 'templateNegotiation'
+          ])
+          && data.companyName is string && data.companyName.size() <= 100
           && data.customSignature is string && data.customSignature.size() <= 500
           && data.paymentMethods is string && data.paymentMethods.size() <= 500
           && (!data.keys().hasAll(['pixKey']) || data.pixKey is string && data.pixKey.size() <= 150)
-          && (!data.keys().hasAll(['securityPin']) || data.securityPin is string && data.securityPin.size() <= 12);
+          && (!data.keys().hasAll(['securityPin']) || data.securityPin is string && data.securityPin.size() <= 12)
+          && (!data.keys().hasAll(['promptFriendly']) || data.promptFriendly is string && data.promptFriendly.size() <= 1000)
+          && (!data.keys().hasAll(['promptFormal']) || data.promptFormal is string && data.promptFormal.size() <= 1000)
+          && (!data.keys().hasAll(['promptUrgent']) || data.promptUrgent is string && data.promptUrgent.size() <= 1000)
+          && (!data.keys().hasAll(['promptNegotiation']) || data.promptNegotiation is string && data.promptNegotiation.size() <= 1000)
+          && (!data.keys().hasAll(['templateFriendly']) || data.templateFriendly is string && data.templateFriendly.size() <= 2000)
+          && (!data.keys().hasAll(['templateFormal']) || data.templateFormal is string && data.templateFormal.size() <= 2000)
+          && (!data.keys().hasAll(['templateUrgent']) || data.templateUrgent is string && data.templateUrgent.size() <= 2000)
+          && (!data.keys().hasAll(['templateNegotiation']) || data.templateNegotiation is string && data.templateNegotiation.size() <= 2000);
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasOnly(['nome', 'email', 'role', 'permissoes'])
+          && data.nome is string && data.nome.size() <= 150
+          && data.email is string && data.email.size() <= 150
+          && data.role in ['Administrador', 'Financeiro', 'Operador', 'Supervisor', 'Auditor']
+          && data.permissoes is list
+          && data.permissoes.hasOnly(['Visualizar', 'Criar', 'Editar', 'Excluir', 'Aprovar']);
     }
 
     // Secure multi-tenant user root
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
-
+      
       // Debtors subcollection
       match /debtors/{debtorId} {
-        allow read: if isOwner(userId);
+        allow read: if isOwner(userId) && getUserData().permissoes.hasAny(['Visualizar']);
         
         allow create: if isOwner(userId) 
                       && isValidId(debtorId)
+                      && getUserData().permissoes.hasAny(['Criar'])
                       && isValidDebtor(request.resource.data)
                       && request.resource.data.keys().hasAll(['name', 'phone', 'amount', 'dueDate', 'daysOverdue', 'description', 'status', 'tone']);
                       
         allow update: if isOwner(userId) 
                       && isValidId(debtorId)
+                      && getUserData().permissoes.hasAny(['Editar'])
                       && isValidDebtor(request.resource.data);
                       
-        allow delete: if isOwner(userId);
+        allow delete: if isOwner(userId) && getUserData().permissoes.hasAny(['Excluir']);
       }
 
       // Workstation Config subcollection
       match /config/{configId} {
-        allow read: if isOwner(userId);
+        allow read: if isOwner(userId) && getUserData().permissoes.hasAny(['Visualizar']);
         
         allow create, update: if isOwner(userId)
                               && isValidId(configId)
+                              && getUserData().permissoes.hasAny(['Editar'])
                               && isValidConfig(request.resource.data);
                               
-        allow delete: if isOwner(userId);
+        allow delete: if isOwner(userId) && getUserData().permissoes.hasAny(['Editar']);
       }
+    }
+
+    // User profiles collection for RBAC
+    match /usuarios/{uid} {
+      // Users can only read their own profile
+      allow read: if isSignedIn() && (request.auth.uid == uid || getUserData().role == 'Administrador');
+      
+      // Only Administrators can create, update, or delete profiles directly via client
+      allow create, update: if isSignedIn() && getUserData().role == 'Administrador' && isValidUser(request.resource.data);
+      allow delete: if isSignedIn() && getUserData().role == 'Administrador';
     }
   }
 }

@@ -38,7 +38,7 @@ import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
 import { auth, db, signInWithGoogle, logout, handleFirestoreError, OperationType } from "./firebase";
 
-import { Debtor, CollectionSummary, AppConfig, CollectionTone, DebtStatus } from "./types";
+import { Debtor, CollectionSummary, AppConfig, CollectionTone, DebtStatus, UserProfile, UserRole, UserPermission, ROLE_PERMISSIONS } from "./types";
 import { SummaryStats } from "./components/SummaryStats";
 import { ImportDebtors } from "./components/ImportDebtors";
 import { SettingsModal } from "./components/SettingsModal";
@@ -56,6 +56,11 @@ export default function App() {
   // Authentication states
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
+
+  // RBAC operational states
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
+  const [demoRole, setDemoRole] = useState<UserRole>('Administrador');
 
   // Operator verification state (stored in sessionStorage to avoid unnecessary re-entries during active session)
   const [isAdminVerified, setIsAdminVerified] = useState<boolean>(() => {
@@ -111,16 +116,56 @@ export default function App() {
 
   const [authDomainError, setAuthDomainError] = useState<string | null>(null);
 
-  // Auth State Listener
+  // Fetch/Sync User Profile for RBAC
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
+    if (!currentUser) {
+      setUserProfile(null);
+      setIsProfileLoading(false);
+      return;
+    }
+
+    if (currentUser.isDemo) {
+      setUserProfile({
+        uid: currentUser.uid,
+        nome: currentUser.displayName || 'Operador Local',
+        email: currentUser.email || 'local@wa-fort.com',
+        role: demoRole,
+        permissoes: ROLE_PERMISSIONS[demoRole]
+      });
+      setIsProfileLoading(false);
+      return;
+    }
+
+    const fetchUserProfile = async () => {
+      setIsProfileLoading(true);
+      try {
+        const token = await currentUser.getIdToken();
+        const res = await fetch("/api/users/me", {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserProfile(data.user);
+        } else {
+          console.error("Erro ao sincronizar perfil.");
+        }
+      } catch (err) {
+        console.error("Erro de perfil:", err);
+      } finally {
+        setIsProfileLoading(false);
       }
-      setIsAuthLoading(false);
-    });
-    return unsubscribe;
-  }, []);
+    };
+
+    fetchUserProfile();
+  }, [currentUser, demoRole]);
+
+  // Permission checking helper
+  const hasPermission = (permission: UserPermission): boolean => {
+    if (!userProfile) return false;
+    return userProfile.permissoes.includes(permission);
+  };
 
   // Synchronize debtors from Firestore or Local Storage
   useEffect(() => {
@@ -425,10 +470,16 @@ export default function App() {
     setIsGeneratingMessage(true);
     try {
       const selectedTone = customTone || debtor.tone;
-      
+      const token = currentUser.isDemo 
+        ? `demo-token-${userProfile?.role || 'Operador'}` 
+        : await currentUser.getIdToken();
+
       const response = await fetch("/api/generate-message", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           name: debtor.name,
           amount: debtor.amount,
@@ -638,6 +689,16 @@ export default function App() {
   const handleUpdateStatus = async (targetId: string, newStatus: DebtStatus) => {
     if (!currentUser) return;
 
+    // Authorization checks
+    if (newStatus === 'paid' && !hasPermission('Aprovar')) {
+      showAlert("Acesso negado. Você não possui a permissão 'Aprovar' necessária para quitar faturas.", "Restrição de Acesso");
+      return;
+    }
+    if (newStatus !== 'paid' && !hasPermission('Editar')) {
+      showAlert("Acesso negado. Você não possui a permissão 'Editar' necessária para atualizar status de faturas.", "Restrição de Acesso");
+      return;
+    }
+
     // Track original status before marking to allow instant precise undo
     const currentDebtor = debtors.find(d => d.id === targetId);
     if (currentDebtor) {
@@ -669,6 +730,10 @@ export default function App() {
 
   const handleDeleteDebtor = (targetId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!hasPermission('Excluir')) {
+      showAlert("Acesso negado. Você não possui a permissão 'Excluir' para remover contatos.", "Restrição de Acesso");
+      return;
+    }
     showConfirm(
       "Tem certeza de que deseja remover este cadastro de inadimplente da WA Fort?",
       async () => {
@@ -700,6 +765,10 @@ export default function App() {
   };
 
   const handleDeleteAllDebtors = () => {
+    if (!hasPermission('Excluir')) {
+      showAlert("Acesso negado. Você não possui a permissão 'Excluir' para limpar a base.", "Restrição de Acesso");
+      return;
+    }
     showConfirm(
       "ATENÇÃO: Tem certeza de que deseja apagar absolutamente TODOS os inadimplentes cadastrados no painel? Esta ação limpará todo o histórico de exemplos e testes.",
       async () => {
@@ -852,7 +921,7 @@ export default function App() {
     }
   }, [activeDebtorId]);
 
-  if (isAuthLoading) {
+  if (isAuthLoading || (currentUser && isProfileLoading)) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
         <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
@@ -862,7 +931,7 @@ export default function App() {
             Conectando ao Servidor Seguro
           </h3>
           <p className="text-xs text-slate-400">
-            Autenticando sessão com o Google Firebase...
+            Autenticando sessão e carregando perfil...
           </p>
         </div>
       </div>
@@ -1148,13 +1217,32 @@ export default function App() {
               <span>Bloquear Terminal</span>
             </button>
 
-            <button
-              onClick={() => setIsSettingsModalOpen(true)}
-              className="px-3 py-2 text-xs font-semibold bg-white/10 hover:bg-white/15 border border-white/10 text-white hover:text-brand-gold rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
-            >
-              <Settings className="w-3.5 h-3.5 shrink-0" />
-              <span>Dados da WA Fort</span>
-            </button>
+            {currentUser.isDemo && (
+              <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1.5 rounded-xl border border-white/5">
+                <span className="text-[10px] uppercase font-bold text-slate-300 shrink-0">Simular Perfil:</span>
+                <select
+                  value={demoRole}
+                  onChange={(e) => setDemoRole(e.target.value as UserRole)}
+                  className="bg-brand-blue border border-slate-700 text-white text-[10px] rounded-lg p-1.5 font-bold outline-none cursor-pointer focus:border-brand-gold"
+                >
+                  <option value="Administrador">Administrador</option>
+                  <option value="Supervisor">Supervisor</option>
+                  <option value="Financeiro">Financeiro</option>
+                  <option value="Operador">Operador</option>
+                  <option value="Auditor">Auditor</option>
+                </select>
+              </div>
+            )}
+
+            {hasPermission('Editar') && (
+              <button
+                onClick={() => setIsSettingsModalOpen(true)}
+                className="px-3 py-2 text-xs font-semibold bg-white/10 hover:bg-white/15 border border-white/10 text-white hover:text-brand-gold rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5 shrink-0" />
+                <span>Dados da WA Fort</span>
+              </button>
+            )}
 
             <button
               id="reports-trigger"
@@ -1166,14 +1254,16 @@ export default function App() {
               <span>Relatórios & Caixa</span>
             </button>
             
-            <button
-              id="import-trigger"
-              onClick={() => setIsImportModalOpen(true)}
-              className="px-4 py-2 text-xs font-bold bg-brand-gold hover:bg-[#b08e1a] text-white rounded-xl flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
-            >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span>Novo Inadimplente</span>
-            </button>
+            {hasPermission('Criar') && (
+              <button
+                id="import-trigger"
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-4 py-2 text-xs font-bold bg-brand-gold hover:bg-[#b08e1a] text-white rounded-xl flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>Novo Inadimplente</span>
+              </button>
+            )}
           </div>
 
         </div>
@@ -1405,13 +1495,15 @@ export default function App() {
 
                         <div className="flex items-center space-x-1.5">
                           {/* Quick delete */}
-                          <button
-                            onClick={(e) => handleDeleteDebtor(debtor.id, e)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border border-transparent rounded-xl transition cursor-pointer flex items-center justify-center shrink-0 shadow-xs"
-                            title="Apagar este inadimplente permanentemente do sistema"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {hasPermission('Excluir') && (
+                            <button
+                              onClick={(e) => handleDeleteDebtor(debtor.id, e)}
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border border-transparent rounded-xl transition cursor-pointer flex items-center justify-center shrink-0 shadow-xs"
+                              title="Apagar este inadimplente permanentemente do sistema"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
 
                           {/* Quick WhatsApp open action on right side */}
                           <button
@@ -1443,7 +1535,7 @@ export default function App() {
               <span>Filtro ativo: <b className="text-slate-800 capitalize">{activeFilter === 'all' ? 'Todos' : activeFilter}</b></span>
               <div className="flex items-center space-x-3">
                 <span>Total listado: <b>{filteredAndSortedDebtors.length} contatos</b></span>
-                {debtors.length > 0 && (
+                {debtors.length > 0 && hasPermission('Excluir') && (
                   <button
                     onClick={handleDeleteAllDebtors}
                     className="text-red-600 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 px-2.5 py-1 rounded-xl transition font-bold text-[10px] cursor-pointer flex items-center space-x-1 shadow-sm"
@@ -1574,7 +1666,7 @@ export default function App() {
                     {/* Manual Regenerate IA content */}
                     <button
                       onClick={() => generateAIMessageForDebtor(activeDebtor.id)}
-                      disabled={isGeneratingMessage}
+                      disabled={isGeneratingMessage || !hasPermission('Editar')}
                       className="text-[10px] text-brand-blue hover:text-blue-900 font-bold flex items-center space-x-1 disabled:opacity-40 cursor-pointer"
                     >
                       <RefreshCw className={`w-3 h-3 mr-0.5 ${isGeneratingMessage ? 'animate-spin text-amber-500' : ''}`} />
@@ -1622,8 +1714,9 @@ export default function App() {
                           value={activeDebtor.customMessage || ""}
                           onChange={(e) => handleActiveMessageChange(e.target.value)}
                           placeholder="Carregando mensagem de cobrança..."
+                          disabled={!hasPermission('Editar')}
                           rows={10}
-                          className="w-full h-full bg-transparent resize-none text-[11px] outline-none text-slate-800 focus:outline-none focus:ring-0 select-text leading-relaxed font-sans placeholder:text-slate-400"
+                          className="w-full h-full bg-transparent resize-none text-[11px] outline-none text-slate-800 focus:outline-none focus:ring-0 select-text leading-relaxed font-sans placeholder:text-slate-400 disabled:opacity-60"
                         />
                       )}
 
@@ -1637,10 +1730,8 @@ export default function App() {
                             <Copy className="w-2.8 h-2.8 text-[#1E3A8A]" />
                             <span>{copyFeedback ? "Copiado!" : "Copiar Texto"}</span>
                           </button>
-                          <span>11:36 ✓✓</span>
                         </div>
                       )}
-
                     </div>
                   </div>
                 </div>
@@ -1660,7 +1751,8 @@ export default function App() {
                       <button
                         key={btn.status}
                         onClick={() => handleUpdateStatus(activeDebtor.id, btn.status as DebtStatus)}
-                        className={`flex-1 py-1 px-1 rounded-lg text-xs font-semibold border text-center transition cursor-pointer ${
+                        disabled={btn.status === 'paid' ? !hasPermission('Aprovar') : !hasPermission('Editar')}
+                        className={`flex-1 py-1 px-1 rounded-lg text-xs font-semibold border text-center transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                           activeDebtor.status === btn.status
                             ? "ring-2 ring-indigo-500/10 font-black border-slate-400 bg-slate-200 shadow-xs"
                             : `${btn.bg} opacity-70 hover:opacity-100`
@@ -1678,7 +1770,8 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => handleUpdateStatus(activeDebtor.id, 'paid')}
-                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition cursor-pointer"
+                      disabled={!hasPermission('Aprovar')}
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4 text-emerald-100 shrink-0" />
                       <span>Confirmar Pagamento (Recuperar Dívida) 💸</span>
@@ -1696,7 +1789,8 @@ export default function App() {
                           const prev = previousDebtStatuses[activeDebtor.id] || 'pending';
                           handleUpdateStatus(activeDebtor.id, prev);
                         }}
-                        className="mt-2 text-[10px] text-[#1E3A8A] hover:underline font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer shadow-xs inline-flex items-center gap-1 hover:bg-slate-50 transition"
+                        disabled={!hasPermission('Aprovar')}
+                        className="mt-2 text-[10px] text-[#1E3A8A] hover:underline disabled:opacity-50 font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer shadow-xs inline-flex items-center gap-1 hover:bg-slate-50 transition"
                       >
                         <span>Desfazer baixa (restaurar como {
                           previousDebtStatuses[activeDebtor.id] === 'pending' ? 'Pendente' :
@@ -1719,6 +1813,7 @@ export default function App() {
                     Ao clicar, o WhatsApp Web abrirá na aba do cliente com o texto pré-preenchido.
                   </p>
                 </div>
+
 
               </div>
             ) : (
@@ -1757,6 +1852,8 @@ export default function App() {
           onImport={handleImportDebtors}
           onClose={() => setIsImportModalOpen(false)}
           showAlert={showAlert}
+          currentUser={currentUser}
+          userProfile={userProfile}
         />
       )}
 
@@ -1765,6 +1862,8 @@ export default function App() {
           config={config}
           onSave={handleSaveConfig}
           onClose={() => setIsSettingsModalOpen(false)}
+          userProfile={userProfile}
+          currentUser={currentUser}
         />
       )}
 

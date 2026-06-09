@@ -1,13 +1,11 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import { requireAuth, requirePermission, AuthenticatedRequest } from "./api/rbacMiddleware";
+import { getFirestoreAdmin } from "./api/backendAuth";
+import { ROLE_PERMISSIONS } from "./src/types";
 
 // Load environment variables
 dotenv.config();
@@ -85,7 +83,7 @@ function getFallbackMessage(
       return `Olá, ${name}! Tudo bem?\n\nPassando para lembrar que a sua fatura ou mensalidade de *${description}*, no valor de *${formattedAmount}*, venceu em *${formattedDate}*. 🌟\n\nSabemos que a rotina é corrida e pode ter passado despercebido. Se precisar da linha digitável ou do link Pix, estamos aqui para ajudar!\n\n${paymentDetails}\n\nSe você já realizou o pagamento, pedimos que desconsidere esta mensagem ou nos envie o comprovante para darmos a baixa. Obrigado pela parceria!\n\nAtenciosamente,\n${signOff}`;
     
     case 'urgent':
-      return `⚠️ *AVISO IMPORTANTE - ${companyName.toUpperCase()}*\n\nPrezado(a) ${name},\n\nConstatamos em nosso sistema que a mensalidade de *${description}* com vencimento em *${formattedDate}* (*${daysOverdue} dias de atraso*), no valor de *${formattedAmount}*, continua pendente de pagamento.\n\nLembramos que o atraso prolongado pode resultar na *suspensão temporária dos serviços contratados* da WA Fort e inclusão em cadastros de crédito.\n\nEvite a suspension do seu sinal de internet/serviço realizatando a quitação imediata.\n\n${paymentDetails}\n\nPor favor, envie o comprovante assim que concluir para reativação imediata.\n\n${signOff}`;
+      return `⚠️ *AVISO IMPORTANTE - ${companyName.toUpperCase()}*\n\nPrezado(a) ${name},\n\nConstatamos in nosso sistema que a mensalidade de *${description}* com vencimento em *${formattedDate}* (*${daysOverdue} dias de atraso*), no valor de *${formattedAmount}*, continua pendente de pagamento.\n\nLembramos que o atraso prolongado pode resultar na *suspensão temporária dos serviços contratados* da WA Fort e inclusão em cadastros de crédito.\n\nEvite a suspensão do seu sinal de internet/serviço realizando a quitação imediata.\n\n${paymentDetails}\n\nPor favor, envie o comprovante assim que concluir para reativação imediata.\n\n${signOff}`;
     
     case 'negotiation':
       return `Olá, ${name}! Esperamos que esteja bem.\n\nIdentificamos uma pendência de *${formattedAmount}* vencida em *${formattedDate}* referente a *${description}*.\n\nNa *${companyName}*, valorizamos muito você como cliente. Pensando nisso, preparamos condições super especiais e facilitadas para você regularizar a sua situação ainda hoje, sem juros adicionais ou multas abusivas.\n\n${paymentDetails}\n\nPor favor, responda a esta mensagem com a palavra *ACORDO* para falar com um atendente e ver as opções de parcelamento. Vamos resolver isso juntos!\n\nAbraços,\n${signOff}`;
@@ -97,7 +95,7 @@ function getFallbackMessage(
 }
 
 // REST Endpoint to extract debtors from unstructured text (e.g. PDF copy-paste, emails, TXT list)
-app.post("/api/extract-debtors", async (req, res) => {
+app.post("/api/extract-debtors", requireAuth, requirePermission('Criar'), async (req: AuthenticatedRequest, res) => {
   try {
     const { text } = req.body;
     if (!text || !text.trim()) {
@@ -191,7 +189,7 @@ ${text}
 });
 
 // REST Endpoint to generate collection message
-app.post("/api/generate-message", async (req, res) => {
+app.post("/api/generate-message", requireAuth, requirePermission('Editar'), async (req: AuthenticatedRequest, res) => {
   try {
     const { 
       name, 
@@ -264,7 +262,7 @@ app.post("/api/generate-message", async (req, res) => {
     }
 
     const systemInstruction = `Você é um gestor de cobranças e recuperação de crédito altamente qualificado e cortês da empresa "WA Fort" (uma renomada empresa brasileira de serviços de telecomunicação, internet, conexões rápidas e soluções inteligentes).
-Sua missão é gerar mensagens excepcionais para envio individual via WhatsApp para clientes que estão inadimplentes (com faturas atrasadas).
+Sua missão é gerar mensagens especiais para envio individual via WhatsApp para clientes que estão inadimplentes (com faturas atrasadas).
 Siga EXCLUSIVAMENTE estas restrições:
 1. Responda apenas com a mensagem pronta de cobrança, nada mais de conversa ou introdução.
 2. Escreva em Português do Brasil de forma extremamente fluida e natural.
@@ -304,6 +302,113 @@ ${customSignature ? `- Assinatura personalizada a incluir no final: ${customSign
   } catch (error: any) {
     console.error("Gemini API server error:", error);
     res.status(500).json({ error: error?.message || "Internal server error" });
+  }
+});
+
+// User profile synchronization and RBAC management API endpoints
+app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (req.user?.isDemo) {
+      return res.json({ user: req.user });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const userDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
+    if (!userDoc.exists) {
+      // First registered user gets Admin, others get Operador by default
+      const allUsersSnap = await dbAdmin.collection('usuarios').limit(1).get();
+      const role = allUsersSnap.empty ? 'Administrador' : 'Operador';
+      const defaultPermissions = ROLE_PERMISSIONS[role];
+      
+      const newProfile = {
+        nome: req.user!.nome || 'Novo Operador',
+        email: req.user!.email,
+        role,
+        permissoes: defaultPermissions
+      };
+
+      await dbAdmin.collection('usuarios').doc(req.user!.uid).set(newProfile);
+      return res.json({ user: { uid: req.user!.uid, ...newProfile } });
+    }
+
+    res.json({ user: { uid: req.user!.uid, ...userDoc.data() } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/users", requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (req.user?.isDemo) {
+      if (req.user.role !== 'Administrador') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem listar usuários.' });
+      }
+      return res.json({
+        users: [
+          { uid: 'demo-user-admin', nome: 'Operador Demonstrativo (Admin)', email: 'admin@wa-fort.com', role: 'Administrador', permissoes: ROLE_PERMISSIONS['Administrador'] },
+          { uid: 'demo-user-financeiro', nome: 'Financeiro Demonstrativo', email: 'financeiro@wa-fort.com', role: 'Financeiro', permissoes: ROLE_PERMISSIONS['Financeiro'] },
+          { uid: 'demo-user-operador', nome: 'Operador Demonstrativo', email: 'operador@wa-fort.com', role: 'Operador', permissoes: ROLE_PERMISSIONS['Operador'] },
+          { uid: 'demo-user-supervisor', nome: 'Supervisor Demonstrativo', email: 'supervisor@wa-fort.com', role: 'Supervisor', permissoes: ROLE_PERMISSIONS['Supervisor'] },
+          { uid: 'demo-user-auditor', nome: 'Auditor Demonstrativo', email: 'auditor@wa-fort.com', role: 'Auditor', permissoes: ROLE_PERMISSIONS['Auditor'] }
+        ]
+      });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const callerDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
+    if (!callerDoc.exists || callerDoc.data()?.role !== 'Administrador') {
+      return res.status(403).json({ error: 'Acesso negado. Apenas Administradores podem acessar esta área.' });
+    }
+
+    const snapshot = await dbAdmin.collection('usuarios').get();
+    const users: any[] = [];
+    snapshot.forEach(doc => {
+      users.push({ uid: doc.id, ...doc.data() });
+    });
+    res.json({ users });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/users/:uid", requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { uid } = req.params;
+    const { role, permissoes } = req.body;
+
+    if (req.user?.isDemo) {
+      if (req.user.role !== 'Administrador') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem gerenciar usuários.' });
+      }
+      return res.json({ success: true, message: 'Perfil atualizado em modo de simulação.' });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const callerDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
+    if (!callerDoc.exists || callerDoc.data()?.role !== 'Administrador') {
+      return res.status(403).json({ error: 'Acesso negado. Apenas Administradores podem gerenciar perfis.' });
+    }
+
+    await dbAdmin.collection('usuarios').doc(uid).update({
+      role,
+      permissoes
+    });
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -18,16 +18,18 @@ import {
   Clipboard,
   CheckCircle2
 } from "lucide-react";
-import { Debtor, CollectionTone } from "../types";
+import { Debtor, CollectionTone, UserProfile } from "../types";
 import { calculateDaysDifference, formatWhatsAppNumber } from "../mockData";
 
 interface ImportDebtorsProps {
   onImport: (newDebtors: Omit<Debtor, "id" | "daysOverdue">[]) => void;
   onClose: () => void;
   showAlert?: (message: string, title?: string) => void;
+  currentUser: any;
+  userProfile: UserProfile | null;
 }
 
-export function ImportDebtors({ onImport, onClose, showAlert }: ImportDebtorsProps) {
+export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userProfile }: ImportDebtorsProps) {
   const [activeTab, setActiveTab] = useState<"single" | "bulk" | "ai">("single");
   
   // Single debtor states
@@ -183,9 +185,16 @@ export function ImportDebtors({ onImport, onClose, showAlert }: ImportDebtorsPro
     setAiExtractionError("");
 
     try {
+      const token = currentUser?.isDemo
+        ? `demo-token-${userProfile?.role || 'Operador'}`
+        : await currentUser?.getIdToken();
+
       const response = await fetch("/api/extract-debtors", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ text: aiText })
       });
 

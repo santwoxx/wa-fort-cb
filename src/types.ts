@@ -44,3 +44,25 @@ export interface AppConfig {
   templateUrgent?: string;
   templateNegotiation?: string;
 }
+
+// --- RBAC TYPES & ROLES ---
+export type UserRole = 'Administrador' | 'Financeiro' | 'Operador' | 'Supervisor' | 'Auditor';
+
+export type UserPermission = 'Visualizar' | 'Criar' | 'Editar' | 'Excluir' | 'Aprovar';
+
+export interface UserProfile {
+  uid: string;
+  nome: string;
+  email: string;
+  role: UserRole;
+  permissoes: UserPermission[];
+}
+
+export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
+  Administrador: ['Visualizar', 'Criar', 'Editar', 'Excluir', 'Aprovar'],
+  Financeiro: ['Visualizar', 'Criar', 'Editar', 'Aprovar'],
+  Supervisor: ['Visualizar', 'Criar', 'Editar', 'Aprovar'],
+  Operador: ['Visualizar', 'Criar'],
+  Auditor: ['Visualizar']
+};
+
