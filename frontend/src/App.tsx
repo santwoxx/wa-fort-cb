@@ -175,11 +175,24 @@ export default function App() {
             'Authorization': `Bearer ${token}`
           }
         });
-        if (res.ok) {
+        const contentType = res.headers.get("content-type");
+        if (res.ok && contentType && contentType.includes("application/json")) {
           const data = await res.json();
           setUserProfile(data.user);
         } else {
-          console.error("Erro ao sincronizar perfil.");
+          console.error("Servidor retornou resposta inválida ou erro.");
+          if (res.status === 403) {
+            try {
+              if (contentType && contentType.includes("application/json")) {
+                const data = await res.json();
+                showAlert(data.error || "Acesso recusado. Seu e-mail não está cadastrado ou autorizado.", "Acesso Recusado");
+              } else {
+                showAlert("Acesso recusado. Seu e-mail não está cadastrado ou autorizado.", "Acesso Recusado");
+              }
+            } catch (e) {
+              showAlert("Acesso recusado. Seu e-mail não está cadastrado ou autorizado.", "Acesso Recusado");
+            }
+          }
         }
       } catch (err) {
         console.error("Erro de perfil:", err);
@@ -199,7 +212,7 @@ export default function App() {
 
   // Synchronize debtors from Firestore or Local Storage
   useEffect(() => {
-    if (!currentUser) {
+    if (!currentUser || !userProfile) {
       setDebtors([]);
       return;
     }
@@ -264,11 +277,11 @@ export default function App() {
     });
 
     return unsubscribe;
-  }, [currentUser]);
+  }, [currentUser, userProfile]);
 
   // Synchronize operator config from Firestore or Local Storage
   useEffect(() => {
-    if (!currentUser) {
+    if (!currentUser || !userProfile) {
       setConfig(DEFAULT_CONFIG);
       return;
     }
@@ -302,7 +315,7 @@ export default function App() {
     });
 
     return unsubscribe;
-  }, [currentUser]);
+  }, [currentUser, userProfile]);
 
   const handleLogin = async () => {
     setAuthDomainError(null);
