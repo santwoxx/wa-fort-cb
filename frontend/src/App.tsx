@@ -62,6 +62,7 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
   const [demoRole, setDemoRole] = useState<UserRole>('Administrador');
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Operator verification state (stored in sessionStorage to avoid unnecessary re-entries during active session)
   const [isAdminVerified, setIsAdminVerified] = useState<boolean>(() => {
@@ -168,6 +169,7 @@ export default function App() {
 
     const fetchUserProfile = async () => {
       setIsProfileLoading(true);
+      setProfileError(null);
       try {
         const token = await currentUser.getIdToken();
         const res = await fetch(`${API_URL}/api/users/me`, {
@@ -181,21 +183,28 @@ export default function App() {
           setUserProfile(data.user);
         } else {
           console.error("Servidor retornou resposta inválida ou erro.");
-          if (res.status === 403) {
+          let errMsg = `Servidor retornou código ${res.status}.`;
+          if (contentType && contentType.includes("application/json")) {
             try {
-              if (contentType && contentType.includes("application/json")) {
-                const data = await res.json();
-                showAlert(data.error || "Acesso recusado. Seu e-mail não está cadastrado ou autorizado.", "Acesso Recusado");
-              } else {
-                showAlert("Acesso recusado. Seu e-mail não está cadastrado ou autorizado.", "Acesso Recusado");
+              const data = await res.json();
+              errMsg = data.error || errMsg;
+            } catch (e) {}
+          } else {
+            try {
+              const text = await res.text();
+              if (text && text.trim()) {
+                errMsg = text.length > 150 ? text.substring(0, 150) + "..." : text;
               }
-            } catch (e) {
-              showAlert("Acesso recusado. Seu e-mail não está cadastrado ou autorizado.", "Acesso Recusado");
-            }
+            } catch (e) {}
+          }
+          setProfileError(errMsg);
+          if (res.status === 403) {
+            showAlert(errMsg, "Acesso Recusado");
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erro de perfil:", err);
+        setProfileError(err?.message || String(err));
       } finally {
         setIsProfileLoading(false);
       }
@@ -1072,6 +1081,74 @@ export default function App() {
     );
   }
 
+  // 1. If the user profile failed to load or is unavailable, block here.
+  if (currentUser && !userProfile) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
+        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
+        <div className="bg-[#131D35] border-2 border-amber-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
+          <ShieldAlert className="w-12 h-12 text-amber-500 mb-4 animate-bounce" />
+          <h2 className="font-display font-black text-xl text-white tracking-tight uppercase mb-2">
+            Perfil Indisponível
+          </h2>
+          <p className="text-slate-300 text-xs leading-relaxed mb-6">
+            Não foi possível carregar seu perfil de permissões RBAC do servidor.
+          </p>
+          {profileError && (
+            <div className="w-full mb-6 p-3 bg-red-500/10 border border-red-500/25 rounded-xl text-left font-mono text-[10px] text-red-200 break-words max-h-48 overflow-y-auto">
+              <strong>Detalhes do erro:</strong> {profileError}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="w-full bg-[#C5A021] hover:bg-[#D4AF37] text-slate-950 font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mb-3"
+          >
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            Tentar Novamente
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Alterar Operador / Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. If the user does not have basic Visualizar permission, block here.
+  if (currentUser && !hasPermission('Visualizar')) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
+        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
+        <div className="bg-[#131D35] border-2 border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
+          <ShieldAlert className="w-12 h-12 text-red-500 mb-4 animate-pulse" />
+          <h2 className="font-display font-black text-xl text-white tracking-tight uppercase mb-2">
+            Acesso Restrito
+          </h2>
+          <p className="text-slate-300 text-xs leading-relaxed mb-6">
+            Sua conta (<span className="text-brand-gold font-bold">{userProfile.email}</span>) com função <span className="text-red-400 font-bold">{userProfile.role}</span> não possui a permissão de <span className="font-bold">Visualizar</span> o painel de cobrança.
+          </p>
+          <p className="text-slate-400 text-[10px] leading-relaxed mb-8">
+            Entre em contato com um administrador para obter privilégios adicionais.
+          </p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Alterar Operador / Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (currentUser && !isAdminVerified) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
@@ -1375,66 +1452,7 @@ export default function App() {
     );
   }
 
-  if (!userProfile) {
-    return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
-        <div className="bg-[#131D35] border-2 border-amber-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
-          <ShieldAlert className="w-12 h-12 text-amber-500 mb-4 animate-bounce" />
-          <h2 className="font-display font-black text-xl text-white tracking-tight uppercase mb-2">
-            Perfil Indisponível
-          </h2>
-          <p className="text-slate-300 text-xs leading-relaxed mb-6">
-            Não foi possível carregar seu perfil de permissões RBAC do servidor.
-          </p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="w-full bg-[#C5A021] hover:bg-[#D4AF37] text-slate-950 font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mb-3"
-          >
-            <RefreshCw className="w-4 h-4 animate-spin" />
-            Tentar Novamente
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Alterar Operador / Sair
-          </button>
-        </div>
-      </div>
-    );
-  }
 
-  if (!hasPermission('Visualizar')) {
-    return (
-      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
-        <div className="bg-[#131D35] border-2 border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative z-10 flex flex-col items-center text-center">
-          <ShieldAlert className="w-12 h-12 text-red-500 mb-4 animate-pulse" />
-          <h2 className="font-display font-black text-xl text-white tracking-tight uppercase mb-2">
-            Acesso Restrito
-          </h2>
-          <p className="text-slate-300 text-xs leading-relaxed mb-6">
-            Sua conta (<span className="text-brand-gold font-bold">{userProfile.email}</span>) com função <span className="text-red-400 font-bold">{userProfile.role}</span> não possui a permissão de <span className="font-bold">Visualizar</span> o painel de cobrança.
-          </p>
-          <p className="text-slate-400 text-[10px] leading-relaxed mb-8">
-            Entre em contato com um administrador para obter privilégios adicionais.
-          </p>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Alterar Operador / Sair
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-bg-slate flex flex-col selection:bg-brand-blue/10">
