@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, isSupported } from "firebase/analytics";
 import { 
   getAuth, 
   GoogleAuthProvider, 
@@ -24,7 +24,15 @@ const app = initializeApp(firebaseConfig);
 // Initialize Services
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const analytics = getAnalytics(app);
+export let analytics: any = null;
+
+isSupported().then((supported) => {
+  if (supported) {
+    analytics = getAnalytics(app);
+  }
+}).catch((err) => {
+  console.error("Firebase Analytics not supported in this environment:", err);
+});
 
 // Providers
 export const googleProvider = new GoogleAuthProvider();

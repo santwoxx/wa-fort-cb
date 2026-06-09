@@ -117,6 +117,29 @@ export default function App() {
 
   const [authDomainError, setAuthDomainError] = useState<string | null>(null);
 
+  // Listen to Firebase Authentication state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser((prev: any) => {
+          if (prev && prev.isDemo) return prev;
+          return user;
+        });
+      } else {
+        setCurrentUser((prev: any) => {
+          if (prev && prev.isDemo) return prev;
+          return null;
+        });
+      }
+      setIsAuthLoading(false);
+    }, (error) => {
+      console.error("Erro no observador de autenticação:", error);
+      setIsAuthLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
   // Fetch/Sync User Profile for RBAC
   useEffect(() => {
     if (!currentUser) {
