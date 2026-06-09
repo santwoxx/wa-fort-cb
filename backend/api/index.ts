@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import { requireAuth, requirePermission, requireRole, AuthenticatedRequest } from "./rbacMiddleware";
 import { getFirestoreAdmin } from "./backendAuth";
-import { ROLE_PERMISSIONS } from "../types";
+import { ROLE_PERMISSIONS, UserRole } from "../types";
 
 // Load environment variables
 dotenv.config();
@@ -320,24 +320,59 @@ app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => 
       return res.status(500).json({ error: 'Firebase Admin não configurado.' });
     }
 
+    // 1. Try to find the user profile directly by their authenticated UID
     const userDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
-    if (!userDoc.exists) {
-      const allUsersSnap = await dbAdmin.collection('usuarios').limit(1).get();
-      const role = allUsersSnap.empty ? 'Administrador' : 'Operador';
-      const defaultPermissions = ROLE_PERMISSIONS[role];
-      
+    if (userDoc.exists) {
+      return res.json({ user: { uid: req.user!.uid, ...userDoc.data() } });
+    }
+
+    // 2. Check if there is a pre-approved email record
+    const emailToFind = req.user!.email.trim().toLowerCase();
+    const emailQuery = await dbAdmin.collection('usuarios')
+      .where('email', '==', emailToFind)
+      .limit(1)
+      .get();
+
+    if (!emailQuery.empty) {
+      const preApprovedDoc = emailQuery.docs[0];
+      const preApprovedData = preApprovedDoc.data();
+
+      // Create the definitive user profile mapped to their UID
       const newProfile = {
-        nome: req.user!.nome || 'Novo Operador',
-        email: req.user!.email,
-        role,
-        permissoes: defaultPermissions
+        nome: preApprovedData.nome || req.user!.nome || 'Operador',
+        email: emailToFind,
+        role: preApprovedData.role || 'Operador',
+        permissoes: preApprovedData.permissoes || ROLE_PERMISSIONS[(preApprovedData.role || 'Operador') as UserRole]
       };
 
+      await dbAdmin.collection('usuarios').doc(req.user!.uid).set(newProfile);
+
+      // Clean up the temporary pre-approved record if it has a temporary document ID
+      if (preApprovedDoc.id !== req.user!.uid) {
+        await dbAdmin.collection('usuarios').doc(preApprovedDoc.id).delete();
+      }
+
+      return res.json({ user: { uid: req.user!.uid, ...newProfile } });
+    }
+
+    // 3. Special case: If the database is completely empty (no users at all), bootstrap the first user as Admin
+    const allUsersSnap = await dbAdmin.collection('usuarios').limit(1).get();
+    if (allUsersSnap.empty) {
+      const newProfile = {
+        nome: req.user!.nome || 'Administrador Inicial',
+        email: emailToFind,
+        role: 'Administrador',
+        permissoes: ROLE_PERMISSIONS['Administrador']
+      };
       await dbAdmin.collection('usuarios').doc(req.user!.uid).set(newProfile);
       return res.json({ user: { uid: req.user!.uid, ...newProfile } });
     }
 
-    res.json({ user: { uid: req.user!.uid, ...userDoc.data() } });
+    // 4. Otherwise, reject access
+    console.warn(`[RBAC Security] Rejected login attempt from unapproved email: ${emailToFind}`);
+    return res.status(403).json({
+      error: 'Este e-mail não está pré-aprovado ou cadastrado no sistema. Solicite acesso ao administrador.'
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -373,6 +408,52 @@ app.get("/api/users", requireAuth, requireRole('Administrador'), async (req: Aut
   }
 });
 
+app.post("/api/users", requireAuth, requireRole('Administrador'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { email, nome, role } = req.body;
+    if (!email || !nome || !role) {
+      return res.status(400).json({ error: 'Todos os campos (email, nome, role) são obrigatórios.' });
+    }
+
+    if (req.user?.isDemo) {
+      return res.json({ success: true, user: { uid: `demo-pre-approved-${Date.now()}`, email, nome, role, permissoes: ROLE_PERMISSIONS[role as UserRole] } });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const emailToCreate = email.trim().toLowerCase();
+
+    // Check if user already exists with this email
+    const existingEmailSnap = await dbAdmin.collection('usuarios')
+      .where('email', '==', emailToCreate)
+      .limit(1)
+      .get();
+      
+    if (!existingEmailSnap.empty) {
+      return res.status(400).json({ error: 'Este e-mail já está cadastrado ou autorizado.' });
+    }
+
+    const defaultPermissions = ROLE_PERMISSIONS[role as UserRole] || [];
+    
+    // Create a pre-approved user document with a unique ID
+    const preApprovedId = `pre-approved-${Date.now()}`;
+    const newProfile = {
+      nome: nome.trim(),
+      email: emailToCreate,
+      role,
+      permissoes: defaultPermissions
+    };
+
+    await dbAdmin.collection('usuarios').doc(preApprovedId).set(newProfile);
+    res.json({ success: true, user: { uid: preApprovedId, ...newProfile } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put("/api/users/:uid", requireAuth, requireRole('Administrador'), async (req: AuthenticatedRequest, res) => {
   try {
     const { uid } = req.params;
@@ -392,6 +473,25 @@ app.put("/api/users/:uid", requireAuth, requireRole('Administrador'), async (req
       permissoes
     });
 
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/users/:uid", requireAuth, requireRole('Administrador'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { uid } = req.params;
+    if (req.user?.isDemo) {
+      return res.json({ success: true });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    await dbAdmin.collection('usuarios').doc(uid).delete();
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

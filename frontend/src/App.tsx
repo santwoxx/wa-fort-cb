@@ -71,6 +71,12 @@ export default function App() {
   const [adminPasswordInput, setAdminPasswordInput] = useState("");
   const [adminError, setAdminError] = useState<string | null>(null);
 
+  const [isPinVerified, setIsPinVerified] = useState<boolean>(() => {
+    return sessionStorage.getItem("wafort_pin_verified") === "true";
+  });
+  const [loginPinInput, setLoginPinInput] = useState("");
+  const [loginPinError, setLoginPinError] = useState<string | null>(null);
+
   // Initialize state; actual sync is driven dynamically by Firestore once authenticated
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
@@ -313,29 +319,21 @@ export default function App() {
     }
   };
 
-  const handleEnterDemoMode = () => {
-    const demoUser = {
-      uid: "local-demo-user",
-      displayName: "Operador Demonstrativo (Local)",
-      email: "local@wa-fort.com",
-      photoURL: null,
-      isDemo: true
-    };
-    setCurrentUser(demoUser);
-    setIsAdminVerified(false);
-  };
-
   const handleLogout = async () => {
     try {
       if (currentUser && !currentUser.isDemo) {
         await logout();
       }
       sessionStorage.removeItem("wafort_admin_verified");
+      sessionStorage.removeItem("wafort_pin_verified");
       setCurrentUser(null);
       setIsAdminVerified(false);
+      setIsPinVerified(false);
       setAdminLoginInput("");
       setAdminPasswordInput("");
+      setLoginPinInput("");
       setAdminError(null);
+      setLoginPinError(null);
     } catch (err) {
       showAlert("Não foi possível encerrar a sessão.", "Erro ao Sair");
     }
@@ -349,6 +347,18 @@ export default function App() {
       setAdminError(null);
     } else {
       setAdminError("Nome de usuário login ou senha de segurança incorretos.");
+    }
+  };
+
+  const handleLoginPinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const correctPin = config.securityPin || "1234";
+    if (loginPinInput === correctPin) {
+      sessionStorage.setItem("wafort_pin_verified", "true");
+      setIsPinVerified(true);
+      setLoginPinError(null);
+    } else {
+      setLoginPinError("PIN de segurança incorreto.");
     }
   };
 
@@ -1035,21 +1045,6 @@ export default function App() {
             Entrar com Conta Google
           </button>
 
-          <div className="flex items-center justify-center gap-2 my-4 w-full">
-            <hr className="border-slate-800 w-full" />
-            <span className="text-[9px] font-black tracking-widest text-slate-500 shrink-0 uppercase">OU</span>
-            <hr className="border-slate-800 w-full" />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleEnterDemoMode}
-            className="w-full flex items-center justify-center gap-2 bg-[#1A253E] hover:bg-[#253558] text-brand-gold border border-brand-gold/20 font-bold text-xs py-3 px-6 rounded-2xl shadow-md transition-all active:scale-[0.98] cursor-pointer"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            Ativar Modo Operador Local (Sem Firebase)
-          </button>
-
           <div className="mt-8 flex items-center justify-center gap-2 border-t border-slate-800 pt-6 w-full text-[10px] text-slate-400">
             <span className="shrink-0 flex items-center gap-1 text-slate-500 font-mono">
               <ShieldCheck className="w-3.5 h-3.5 text-[#C5A021]" />
@@ -1157,6 +1152,87 @@ export default function App() {
             <span>SECURE GATEWAY</span>
             <span>•</span>
             <span>MFA OPERATOR ENFORCED</span>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (currentUser && isAdminVerified && !isPinVerified) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center p-4">
+        <div className="absolute inset-0 bg-[radial-gradient(#1E3A8A_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-15" />
+        
+        <form 
+          onSubmit={handleLoginPinSubmit}
+          className="bg-[#131D35] border-2 border-brand-gold/30 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative z-10 flex flex-col"
+        >
+          {/* Logo */}
+          <div className="flex items-center justify-center mb-6">
+            <img 
+              src="https://i.ibb.co/21BbKLMF/setor-de-cobran-as-3.png" 
+              alt="WA Fort Setor de Cobranças" 
+              className="h-24 w-auto object-contain rounded-xl"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+
+          <h2 className="font-display font-black text-xl text-center text-white tracking-tight uppercase mb-1">
+            Segurança: PIN Requerido
+          </h2>
+          <p className="text-center text-slate-300 text-xs mb-6">
+            Olá, <span className="text-brand-gold font-bold">{currentUser.displayName || currentUser.email}</span>. Digite seu PIN de segurança pessoal/financeira de 4 a 6 dígitos para liberar o terminal.
+          </p>
+
+          {loginPinError && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200 text-xs text-center font-semibold">
+              {loginPinError}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1.5 text-center">
+                PIN de Segurança (Padrão: 1234)
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                  <Lock className="w-4 h-4" />
+                </span>
+                <input
+                  type="password"
+                  required
+                  maxLength={6}
+                  value={loginPinInput}
+                  onChange={(e) => setLoginPinInput(e.target.value.replace(/[^\d]/g, ""))}
+                  placeholder="• • • •"
+                  className="w-full bg-[#0F172A] border border-slate-700 focus:border-brand-gold text-white text-center text-lg tracking-widest rounded-xl py-3 outline-none transition font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full mt-6 bg-[#C5A021] hover:bg-[#D4AF37] text-slate-950 font-black text-xs py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Confirmar PIN e Entrar
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full mt-3 bg-transparent hover:bg-white/5 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-white text-xs py-2 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Alterar Operador / Sair
+          </button>
+
+          <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-800 pt-4 text-[9px] text-slate-500 font-mono">
+            <span>SECURE SHIELD ACTIVE</span>
+            <span>•</span>
+            <span>MFA ENFORCED</span>
           </div>
         </form>
       </div>

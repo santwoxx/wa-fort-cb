@@ -66,6 +66,81 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const [userActionFeedback, setUserActionFeedback] = useState<string | null>(null);
 
+  // New pre-approved email whitelist states
+  const [newEmail, setNewEmail] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newRole, setNewRole] = useState<UserRole>("Operador");
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail.trim() || !newName.trim()) return;
+
+    setUserActionFeedback("Adicionando...");
+    try {
+      const token = currentUser.isDemo 
+        ? `demo-token-${userProfile?.role}` 
+        : await currentUser.getIdToken();
+        
+      const res = await fetch(`${API_URL}/api/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          email: newEmail.trim().toLowerCase(),
+          nome: newName.trim(),
+          role: newRole
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUserActionFeedback("Usuário pré-aprovado!");
+        setUsersList(prev => [...prev, data.user]);
+        setNewEmail("");
+        setNewName("");
+      } else {
+        const errData = await res.json();
+        setUserActionFeedback(`Erro: ${errData.error || 'Falha ao registrar'}`);
+      }
+    } catch (err) {
+      setUserActionFeedback("Erro ao registrar.");
+    } finally {
+      setTimeout(() => setUserActionFeedback(null), 3000);
+    }
+  };
+
+  const handleDeleteUser = async (targetUid: string) => {
+    if (!window.confirm("Deseja realmente revogar o acesso/pré-aprovação deste e-mail?")) return;
+
+    setUserActionFeedback("Excluindo...");
+    try {
+      const token = currentUser.isDemo 
+        ? `demo-token-${userProfile?.role}` 
+        : await currentUser.getIdToken();
+        
+      const res = await fetch(`${API_URL}/api/users/${targetUid}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        setUserActionFeedback("Acesso revogado!");
+        setUsersList(prev => prev.filter(u => u.uid !== targetUid));
+      } else {
+        const errData = await res.json();
+        setUserActionFeedback(`Erro: ${errData.error || 'Falha ao excluir'}`);
+      }
+    } catch (err) {
+      setUserActionFeedback("Erro ao excluir.");
+    } finally {
+      setTimeout(() => setUserActionFeedback(null), 3000);
+    }
+  };
+
   React.useEffect(() => {
     if (activeTab === 'rbac' && userProfile?.role === 'Administrador') {
       const fetchUsers = async () => {
@@ -447,8 +522,51 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                   <div>
                     <h5 className="text-xs font-bold text-indigo-900">Gerenciamento de Perfis & Permissões (RBAC)</h5>
                     <p className="text-[10px] text-slate-500 leading-normal mt-0.5">
-                      Como administrador, você pode alterar a função de cada operador e habilitar/desabilitar permissões específicas para restrição de rotas e interface.
+                      Como administrador, você pode pré-aprovar novos e-mails Google, alterar funções de operadores e habilitar/desabilitar permissões específicas de rotas.
                     </p>
+                  </div>
+                </div>
+
+                {/* Form to Pre-approve E-mails */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                  <h6 className="text-xs font-bold text-slate-700">Pré-aprovar E-mail (Novo Operador)</h6>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      required
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="Nome completo"
+                      className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1E3A8A]"
+                    />
+                    <input
+                      type="email"
+                      required
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="E-mail Google"
+                      className="px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#1E3A8A]"
+                    />
+                    <div className="flex gap-2">
+                      <select
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value as UserRole)}
+                        className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 font-bold focus:outline-none focus:ring-1 focus:ring-[#1E3A8A] flex-1"
+                      >
+                        <option value="Administrador">Admin</option>
+                        <option value="Supervisor">Supervisor</option>
+                        <option value="Financeiro">Financeiro</option>
+                        <option value="Operador">Operador</option>
+                        <option value="Auditor">Auditor</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleCreateUser}
+                        className="px-3 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs rounded-lg shadow-sm cursor-pointer"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -473,22 +591,36 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
                               <span className="block text-[10px] text-slate-400 font-mono">{user.email}</span>
                             </div>
                             
-                            {/* Role Selector */}
-                            <select
-                              value={user.role}
-                              onChange={(e) => {
-                                const newRole = e.target.value as UserRole;
-                                const newPerms = ROLE_PERMISSIONS[newRole];
-                                handleUpdateUser(user.uid, newRole, newPerms);
-                              }}
-                              className="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg px-2 py-1 font-bold outline-none cursor-pointer"
-                            >
-                              <option value="Administrador">Administrador</option>
-                              <option value="Supervisor">Supervisor</option>
-                              <option value="Financeiro">Financeiro</option>
-                              <option value="Operador">Operador</option>
-                              <option value="Auditor">Auditor</option>
-                            </select>
+                            <div className="flex items-center gap-2">
+                              {/* Role Selector */}
+                              <select
+                                value={user.role}
+                                onChange={(e) => {
+                                  const newRole = e.target.value as UserRole;
+                                  const newPerms = ROLE_PERMISSIONS[newRole];
+                                  handleUpdateUser(user.uid, newRole, newPerms);
+                                }}
+                                className="bg-white border border-slate-200 text-slate-700 text-xs rounded-lg px-2 py-1 font-bold outline-none cursor-pointer"
+                              >
+                                <option value="Administrador">Administrador</option>
+                                <option value="Supervisor">Supervisor</option>
+                                <option value="Financeiro">Financeiro</option>
+                                <option value="Operador">Operador</option>
+                                <option value="Auditor">Auditor</option>
+                              </select>
+
+                              {/* Delete button (do not show for the current admin user to prevent self-deletion) */}
+                              {user.email !== userProfile?.email && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteUser(user.uid)}
+                                  className="p-1 hover:bg-red-50 text-red-500 rounded hover:text-red-700 transition cursor-pointer"
+                                  title="Excluir / Revogar Acesso"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
 
                           {/* Permissions Checkbox Grid */}
