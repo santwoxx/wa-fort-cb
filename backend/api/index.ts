@@ -328,14 +328,19 @@ app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => 
 
     // 2. Check if there is a pre-approved email record
     const emailToFind = req.user!.email.trim().toLowerCase();
+    const isHardcodedWhitelist = emailToFind === 'financeiro@wafort.com.br';
     const emailQuery = await dbAdmin.collection('usuarios')
       .where('email', '==', emailToFind)
       .limit(1)
       .get();
 
-    if (!emailQuery.empty) {
-      const preApprovedDoc = emailQuery.docs[0];
-      const preApprovedData = preApprovedDoc.data();
+    if (!emailQuery.empty || isHardcodedWhitelist) {
+      const preApprovedDoc = !emailQuery.empty ? emailQuery.docs[0] : null;
+      const preApprovedData = preApprovedDoc ? preApprovedDoc.data() : {
+        nome: 'Operador Financeiro',
+        role: 'Financeiro',
+        permissoes: ROLE_PERMISSIONS['Financeiro']
+      };
 
       // Create the definitive user profile mapped to their UID
       const newProfile = {
@@ -348,7 +353,7 @@ app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => 
       await dbAdmin.collection('usuarios').doc(req.user!.uid).set(newProfile);
 
       // Clean up the temporary pre-approved record if it has a temporary document ID
-      if (preApprovedDoc.id !== req.user!.uid) {
+      if (preApprovedDoc && preApprovedDoc.id !== req.user!.uid) {
         await dbAdmin.collection('usuarios').doc(preApprovedDoc.id).delete();
       }
 
