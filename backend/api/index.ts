@@ -1,19 +1,26 @@
 import express from "express";
-import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
-import { requireAuth, requirePermission, AuthenticatedRequest } from "./api/rbacMiddleware";
-import { getFirestoreAdmin } from "./api/backendAuth";
-import { ROLE_PERMISSIONS } from "./src/types";
+import { requireAuth, requirePermission, requireRole, AuthenticatedRequest } from "./rbacMiddleware";
+import { getFirestoreAdmin } from "./backendAuth";
+import { ROLE_PERMISSIONS } from "../types";
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
-
 app.use(express.json());
+
+// Enable CORS for frontend deployments
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Initialize the Google GenAI client lazily & safely
 let aiClient: GoogleGenAI | null = null;
@@ -29,7 +36,7 @@ function getGeminiClient(): GoogleGenAI | null {
       apiKey: apiKey,
       httpOptions: {
         headers: {
-          'User-Agent': 'aistudio-build',
+          'User-Agent': 'aistudio-build-vercel',
         }
       }
     });
@@ -52,7 +59,6 @@ function getFallbackMessage(
 ): string {
   const formattedAmount = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
   
-  // Format due date in case it's YYYY-MM-DD
   let formattedDate = dueDate;
   try {
     const parts = dueDate.split('-');
@@ -80,21 +86,21 @@ function getFallbackMessage(
 
   switch (tone) {
     case 'friendly':
-      return `Olá, ${name}! Tudo bem?\n\nPassando para lembrar que a sua fatura ou mensalidade de *${description}*, no valor de *${formattedAmount}*, venceu em *${formattedDate}*. 🌟\n\nSabemos que a rotina é corrida e pode ter passado despercebido. Se precisar da linha digitável ou do link Pix, estamos aqui para ajudar!\n\n${paymentDetails}\n\nSe você já realizou o pagamento, pedimos que desconsidere esta mensagem ou nos envie o comprovante para darmos a baixa. Obrigado pela parceria!\n\nAtenciosamente,\n${signOff}`;
+      return `Olá, ${name}! Tudo bem?\n\nPassando para lembrar que a sua fatura ou mensalidade de *${description}*, no valor de *${formattedAmount}*, venceu em *${formattedDate}*. 🌟\n\nSabemos que a rotina é corrida e pode ter passado despercebido. Se precisar da linha digitável ou do link Pix, estamos aqui para ajudar!\n\n${paymentDetails}\n\nSe você já realizou o pagamento, pedimos que desconsidere esta mensagem ou nos enviar o comprovante para darmos a baixa. Obrigado pela parceria!\n\nAtenciosamente,\n${signOff}`;
     
     case 'urgent':
-      return `⚠️ *AVISO IMPORTANTE - ${companyName.toUpperCase()}*\n\nPrezado(a) ${name},\n\nConstatamos in nosso sistema que a mensalidade de *${description}* com vencimento em *${formattedDate}* (*${daysOverdue} dias de atraso*), no valor de *${formattedAmount}*, continua pendente de pagamento.\n\nLembramos que o atraso prolongado pode resultar na *suspensão temporária dos serviços contratados* da WA Fort e inclusão em cadastros de crédito.\n\nEvite a suspensão do seu sinal de internet/serviço realizando a quitação imediata.\n\n${paymentDetails}\n\nPor favor, envie o comprovante assim que concluir para reativação imediata.\n\n${signOff}`;
+      return `⚠️ *AVISO IMPORTANTE - ${companyName.toUpperCase()}*\n\nPrezado(a) ${name},\n\nConstatamos em nosso sistema que a mensalidade de *${description}* com vencimento em *${formattedDate}* (*${daysOverdue} dias de atraso*), no valor de *${formattedAmount}*, continua pendente de pagamento.\n\nLembramos que o atraso prolongado pode resultar na *suspensão temporária dos serviços contratados* da WA Fort e inclusão em cadastros de crédito.\n\nEvite a suspensão do seu sinal de internet/serviço realizatando a quitação imediata.\n\n${paymentDetails}\n\nPor favor, envie o comprovante assim que concluir para reativação imediata.\n\n${signOff}`;
     
     case 'negotiation':
       return `Olá, ${name}! Esperamos que esteja bem.\n\nIdentificamos uma pendência de *${formattedAmount}* vencida em *${formattedDate}* referente a *${description}*.\n\nNa *${companyName}*, valorizamos muito você como cliente. Pensando nisso, preparamos condições super especiais e facilitadas para você regularizar a sua situação ainda hoje, sem juros adicionais ou multas abusivas.\n\n${paymentDetails}\n\nPor favor, responda a esta mensagem com a palavra *ACORDO* para falar com um atendente e ver as opções de parcelamento. Vamos resolver isso juntos!\n\nAbraços,\n${signOff}`;
-
+    
     case 'formal':
     default:
-      return `Prezado(a) ${name},\n\nEntramos em contato para informar sobre o débito pendente em nosso sistema, referente a *${description}*, no valor de *${formattedAmount}*, com vencimento original em *${formattedDate}*.\n\nSolicitamos a regularização do débito para evitar cobranças adicionais e interrupções em seus serviços adquiridos.\n\n${paymentDetails}\n\nCaso já tenha efetuado o pagamento, por gentileza, nos envie uma foto ou arquivo do comprovante em resposta a este atendimento.\n\nPermanecemos à disposição para quaisquer esclarecimentos.\n\nAtenciosamente,\n${signOff}`;
+      return `Prezado(a) ${name},\n\nEntramos em contato para informar sobre o débito pendente em nosso sistema, referente a *${description}*, no valor de *${formattedAmount}*, com vencimento original em *${formattedDate}*.\n\nSolicitamos a regularização do débito para evitar cobranças adicionais e interrupções em seus serviços adquiridos.\n\n${paymentDetails}\n\nCaso já tenha efetuado o pagamento, por gentileza, nos envie uma foto ou arquivo do comprovante in resposta a este atendimento.\n\nPermanecemos à disposição para quaisquer esclarecimentos.\n\nAtenciosamente,\n${signOff}`;
   }
 }
 
-// REST Endpoint to extract debtors from unstructured text (e.g. PDF copy-paste, emails, TXT list)
+// REST Endpoint to extract debtors from unstructured text
 app.post("/api/extract-debtors", requireAuth, requirePermission('Criar'), async (req: AuthenticatedRequest, res) => {
   try {
     const { text } = req.body;
@@ -104,7 +110,6 @@ app.post("/api/extract-debtors", requireAuth, requirePermission('Criar'), async 
 
     const client = getGeminiClient();
     if (!client) {
-      // Offline fallback when no API key is set
       return res.json({ 
         debtors: [
           {
@@ -184,7 +189,7 @@ ${text}
     res.json({ debtors: parsedData.debtors || [], source: "gemini" });
   } catch (error: any) {
     console.error("Erro no endpoint /api/extract-debtors:", error);
-    res.status(500).json({ error: error?.message || "Internal server error" });
+    res.status(550).json({ error: error?.message || "Internal server error" });
   }
 });
 
@@ -225,7 +230,6 @@ app.post("/api/generate-message", requireAuth, requirePermission('Editar'), asyn
     const client = getGeminiClient();
     
     if (!client) {
-      // Use premium local logic if no API key is specified
       const fallback = getFallbackMessage(
         name, 
         amount, 
@@ -241,7 +245,6 @@ app.post("/api/generate-message", requireAuth, requirePermission('Editar'), asyn
       return res.json({ text: fallback, source: "fallback" });
     }
 
-    // Format fields for cleaner prompts
     const formattedAmount = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
     
     let toneInstruction = "";
@@ -262,7 +265,7 @@ app.post("/api/generate-message", requireAuth, requirePermission('Editar'), asyn
     }
 
     const systemInstruction = `Você é um gestor de cobranças e recuperação de crédito altamente qualificado e cortês da empresa "WA Fort" (uma renomada empresa brasileira de serviços de telecomunicação, internet, conexões rápidas e soluções inteligentes).
-Sua missão é gerar mensagens especiais para envio individual via WhatsApp para clientes que estão inadimplentes (com faturas atrasadas).
+Sua missão é gerar mensagens excepcionais para envio individual via WhatsApp para clientes que estão inadimplentes (com faturas atrasadas).
 Siga EXCLUSIVAMENTE estas restrições:
 1. Responda apenas com a mensagem pronta de cobrança, nada mais de conversa ou introdução.
 2. Escreva em Português do Brasil de forma extremamente fluida e natural.
@@ -319,7 +322,6 @@ app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => 
 
     const userDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
     if (!userDoc.exists) {
-      // First registered user gets Admin, others get Operador by default
       const allUsersSnap = await dbAdmin.collection('usuarios').limit(1).get();
       const role = allUsersSnap.empty ? 'Administrador' : 'Operador';
       const defaultPermissions = ROLE_PERMISSIONS[role];
@@ -341,12 +343,9 @@ app.get("/api/users/me", requireAuth, async (req: AuthenticatedRequest, res) => 
   }
 });
 
-app.get("/api/users", requireAuth, async (req: AuthenticatedRequest, res) => {
+app.get("/api/users", requireAuth, requireRole('Administrador'), async (req: AuthenticatedRequest, res) => {
   try {
     if (req.user?.isDemo) {
-      if (req.user.role !== 'Administrador') {
-        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem listar usuários.' });
-      }
       return res.json({
         users: [
           { uid: 'demo-user-admin', nome: 'Operador Demonstrativo (Admin)', email: 'admin@wa-fort.com', role: 'Administrador', permissoes: ROLE_PERMISSIONS['Administrador'] },
@@ -363,11 +362,6 @@ app.get("/api/users", requireAuth, async (req: AuthenticatedRequest, res) => {
       return res.status(500).json({ error: 'Firebase Admin não configurado.' });
     }
 
-    const callerDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
-    if (!callerDoc.exists || callerDoc.data()?.role !== 'Administrador') {
-      return res.status(403).json({ error: 'Acesso negado. Apenas Administradores podem acessar esta área.' });
-    }
-
     const snapshot = await dbAdmin.collection('usuarios').get();
     const users: any[] = [];
     snapshot.forEach(doc => {
@@ -379,26 +373,18 @@ app.get("/api/users", requireAuth, async (req: AuthenticatedRequest, res) => {
   }
 });
 
-app.put("/api/users/:uid", requireAuth, async (req: AuthenticatedRequest, res) => {
+app.put("/api/users/:uid", requireAuth, requireRole('Administrador'), async (req: AuthenticatedRequest, res) => {
   try {
     const { uid } = req.params;
     const { role, permissoes } = req.body;
 
     if (req.user?.isDemo) {
-      if (req.user.role !== 'Administrador') {
-        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem gerenciar usuários.' });
-      }
       return res.json({ success: true, message: 'Perfil atualizado em modo de simulação.' });
     }
 
     const dbAdmin = getFirestoreAdmin();
     if (!dbAdmin) {
       return res.status(500).json({ error: 'Firebase Admin não configurado.' });
-    }
-
-    const callerDoc = await dbAdmin.collection('usuarios').doc(req.user!.uid).get();
-    if (!callerDoc.exists || callerDoc.data()?.role !== 'Administrador') {
-      return res.status(403).json({ error: 'Acesso negado. Apenas Administradores podem gerenciar perfis.' });
     }
 
     await dbAdmin.collection('usuarios').doc(uid).update({
@@ -412,26 +398,4 @@ app.put("/api/users/:uid", requireAuth, async (req: AuthenticatedRequest, res) =
   }
 });
 
-// Configure Vite middleware or production build output
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    // Serve index.html for all other routes (single page app)
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[WA Fort Billing Sever] running at http://localhost:${PORT}`);
-  });
-}
-
-startServer();
+export default app;

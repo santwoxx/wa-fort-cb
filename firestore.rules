@@ -79,12 +79,17 @@ service cloud.firestore {
         allow create: if isOwner(userId) 
                       && isValidId(debtorId)
                       && getUserData().permissoes.hasAny(['Criar'])
+                      && (request.resource.data.status == 'paid' ? getUserData().permissoes.hasAny(['Aprovar']) : true)
                       && isValidDebtor(request.resource.data)
                       && request.resource.data.keys().hasAll(['name', 'phone', 'amount', 'dueDate', 'daysOverdue', 'description', 'status', 'tone']);
                       
         allow update: if isOwner(userId) 
                       && isValidId(debtorId)
-                      && getUserData().permissoes.hasAny(['Editar'])
+                      && (
+                        (request.resource.data.status == 'paid' && request.resource.data.status != resource.data.status)
+                        ? getUserData().permissoes.hasAny(['Aprovar'])
+                        : getUserData().permissoes.hasAny(['Editar'])
+                      )
                       && isValidDebtor(request.resource.data);
                       
         allow delete: if isOwner(userId) && getUserData().permissoes.hasAny(['Excluir']);

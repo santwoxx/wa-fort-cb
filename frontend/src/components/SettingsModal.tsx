@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { Settings, X, Save, AlertCircle, Sparkles, Sliders, DollarSign, MessageSquare } from "lucide-react";
 import { AppConfig, UserProfile, UserRole, UserPermission, ROLE_PERMISSIONS } from "../types";
+import { API_URL } from "../config";
 
 interface SettingsModalProps {
   config: AppConfig;
@@ -73,7 +74,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
           const token = currentUser.isDemo 
             ? `demo-token-${userProfile.role}` 
             : await currentUser.getIdToken();
-          const res = await fetch("/api/users", {
+          const res = await fetch(`${API_URL}/api/users`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (res.ok) {
@@ -97,7 +98,7 @@ export function SettingsModal({ config, onSave, onClose, userProfile, currentUse
         ? `demo-token-${userProfile?.role}` 
         : await currentUser.getIdToken();
         
-      const res = await fetch(`/api/users/${targetUid}`, {
+      const res = await fetch(`${API_URL}/api/users/${targetUid}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

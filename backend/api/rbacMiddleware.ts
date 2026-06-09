@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getAuthAdmin, getFirestoreAdmin } from './backendAuth';
-import { UserRole, UserPermission, ROLE_PERMISSIONS } from '../src/types';
+import { UserRole, UserPermission, ROLE_PERMISSIONS } from '../types';
 
 // Extend Express Request type to include user information
 export interface AuthenticatedRequest extends Request {
@@ -104,6 +104,48 @@ export function requirePermission(permission: UserPermission) {
       }
     } catch (error) {
       console.error('Erro na autorização RBAC:', error);
+      return res.status(500).json({ error: 'Erro interno ao verificar permissões do usuário.' });
+    }
+  };
+}
+
+export function requireRole(role: UserRole) {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Não autenticado.' });
+    }
+
+    // Direct mock handling for Demo Mode
+    if (req.user.isDemo && req.user.role) {
+      if (req.user.role === role) {
+        return next();
+      }
+      return res.status(403).json({ 
+        error: `Acesso negado. Apenas a função '${role}' pode acessar este recurso.` 
+      });
+    }
+
+    try {
+      const dbAdmin = getFirestoreAdmin();
+      if (!dbAdmin) {
+        return res.status(500).json({ error: 'Erro no banco de dados do servidor: Firebase Admin não configurado.' });
+      }
+
+      const userDoc = await dbAdmin.collection('usuarios').doc(req.user.uid).get();
+      if (!userDoc.exists) {
+        return res.status(403).json({ error: 'Cadastro do usuário não encontrado na base de dados.' });
+      }
+
+      const userData = userDoc.data();
+      if (userData?.role === role) {
+        next();
+      } else {
+        return res.status(403).json({ 
+          error: `Acesso negado. Apenas a função '${role}' pode executar esta ação.` 
+        });
+      }
+    } catch (error) {
+      console.error('Erro na autorização de função:', error);
       return res.status(500).json({ error: 'Erro interno ao verificar permissões do usuário.' });
     }
   };

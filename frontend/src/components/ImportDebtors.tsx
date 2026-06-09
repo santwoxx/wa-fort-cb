@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Debtor, CollectionTone, UserProfile } from "../types";
 import { calculateDaysDifference, formatWhatsAppNumber } from "../mockData";
+import { API_URL } from "../config";
 
 interface ImportDebtorsProps {
   onImport: (newDebtors: Omit<Debtor, "id" | "daysOverdue">[]) => void;
@@ -189,7 +190,7 @@ export function ImportDebtors({ onImport, onClose, showAlert, currentUser, userP
         ? `demo-token-${userProfile?.role || 'Operador'}`
         : await currentUser?.getIdToken();
 
-      const response = await fetch("/api/extract-debtors", {
+      const response = await fetch(`${API_URL}/api/extract-debtors`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

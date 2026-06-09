@@ -51,6 +51,7 @@ import {
   formatWhatsAppNumber, 
   formatPhoneNumberDisplay 
 } from "./mockData";
+import { API_URL } from "./config";
 
 export default function App() {
   // Authentication states
@@ -140,7 +141,7 @@ export default function App() {
       setIsProfileLoading(true);
       try {
         const token = await currentUser.getIdToken();
-        const res = await fetch("/api/users/me", {
+        const res = await fetch(`${API_URL}/api/users/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -474,7 +475,7 @@ export default function App() {
         ? `demo-token-${userProfile?.role || 'Operador'}` 
         : await currentUser.getIdToken();
 
-      const response = await fetch("/api/generate-message", {
+      const response = await fetch(`${API_URL}/api/generate-message`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
