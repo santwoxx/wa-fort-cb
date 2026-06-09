@@ -1,10 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut 
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 // Your custom web app's Firebase configuration
