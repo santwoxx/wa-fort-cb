@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { UserProfile, UserPermission } from "../types";
 import { API_URL } from "../config";
+import { PagamentosModal } from "./PagamentosModal";
 
 interface DuplicatasModalProps {
   onClose: () => void;
@@ -100,6 +101,9 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
 
   // Copied indicator
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const [isPagamentoModalOpen, setIsPagamentoModalOpen] = useState(false);
+  const [pagamentoModalDuplicata, setPagamentoModalDuplicata] = useState<{ id: string; numero: string; clienteNome: string } | null>(null);
 
   const isDemo = currentUser?.isDemo;
 
@@ -364,6 +368,8 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
   const stats = getStats();
 
   return (
+    <>
+
     <div className="fixed inset-0 bg-slate-100/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-white rounded-3xl shadow-xl border border-slate-200 max-w-6xl w-full flex flex-col my-8">
         
@@ -975,6 +981,17 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
                                                   <Ban className="w-3.5 h-3.5" /> Cancelar Duplicata
                                                 </button>
                                               )}
+
+                                              {/* View Payments */}
+                                              <button
+                                                onClick={() => {
+                                                  setPagamentoModalDuplicata({ id: d.id, numero: d.numeroDuplicata, clienteNome: d.clienteNome });
+                                                  setIsPagamentoModalOpen(true);
+                                                }}
+                                                className="bg-brand-blue hover:bg-blue-900 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition shadow-xs"
+                                              >
+                                                <DollarSign className="w-3.5 h-3.5" /> Pagamentos
+                                              </button>
                                             </div>
 
                                           </div>
@@ -1093,5 +1110,20 @@ export function DuplicatasModal({ onClose, userProfile, currentUser, showAlert, 
 
       </div>
     </div>
+
+    {isPagamentoModalOpen && pagamentoModalDuplicata && (
+      <PagamentosModal
+        onClose={() => { setIsPagamentoModalOpen(false); setPagamentoModalDuplicata(null); }}
+        userProfile={userProfile}
+        currentUser={currentUser}
+        showAlert={showAlert}
+        showConfirm={showConfirm}
+        duplicataId={pagamentoModalDuplicata.id}
+        duplicataNumero={pagamentoModalDuplicata.numero}
+        clienteNome={pagamentoModalDuplicata.clienteNome}
+      />
+    )}
+
+    </>
   );
 }

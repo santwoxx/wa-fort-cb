@@ -113,6 +113,18 @@ export interface Pagamento {
   conciliado: boolean;
   conciliadoPor?: string;
   conciliadoEm?: string;
+  comprovanteUrl?: string;
+  comprovantePath?: string;
+  observacoes?: string;
+  baixado?: boolean;
+  baixadoPor?: string;
+  baixadoEm?: string;
+  baixadoNome?: string;
+  estornadoPor?: string;
+  estornadoEm?: string;
+  motivoEstorno?: string;
+  createdBy: string;
+  createdByName: string;
   empresaId: string;
   status: FinancialStatus;
   createdAt: string;

@@ -31,7 +31,8 @@ import {
   Copy,
   ChevronLeft,
   LogOut,
-  User
+  User,
+  DollarSign
 } from "lucide-react";
 
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
@@ -45,6 +46,7 @@ import { SettingsModal } from "./components/SettingsModal";
 import { ReportsModal } from "./components/ReportsModal";
 import { CashFlowModal } from "./components/CashFlowModal";
 import { DuplicatasModal } from "./components/DuplicatasModal";
+import { PagamentosModal } from "./components/PagamentosModal";
 import { 
   DEFAULT_CONFIG, 
   INITIAL_DEBTORS, 
@@ -97,6 +99,7 @@ export default function App() {
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
   const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
   const [isDuplicatasModalOpen, setIsDuplicatasModalOpen] = useState(false);
+  const [isPagamentosModalOpen, setIsPagamentosModalOpen] = useState(false);
   
   // Loading and generation flags
   const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
@@ -1647,6 +1650,16 @@ export default function App() {
 
             {hasPermission('Visualizar') && (
               <button
+                onClick={() => setIsPagamentosModalOpen(true)}
+                className="px-2 py-1 text-[9px] font-bold bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-lg flex items-center gap-1 transition cursor-pointer"
+              >
+                <DollarSign className="w-3 h-3" />
+                <span className="hidden sm:inline">Pagamentos</span>
+              </button>
+            )}
+
+            {hasPermission('Visualizar') && (
+              <button
                 onClick={() => setIsCashFlowModalOpen(true)}
                 className="px-2 py-1 text-[9px] font-bold bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-lg flex items-center gap-1 transition cursor-pointer"
               >
@@ -2275,6 +2288,16 @@ export default function App() {
       {isDuplicatasModalOpen && (
         <DuplicatasModal
           onClose={() => setIsDuplicatasModalOpen(false)}
+          userProfile={userProfile}
+          currentUser={currentUser}
+          showAlert={showAlert}
+          showConfirm={showConfirm}
+        />
+      )}
+
+      {isPagamentosModalOpen && (
+        <PagamentosModal
+          onClose={() => setIsPagamentosModalOpen(false)}
           userProfile={userProfile}
           currentUser={currentUser}
           showAlert={showAlert}

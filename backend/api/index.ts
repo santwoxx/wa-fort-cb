@@ -2,10 +2,13 @@ import express from 'express';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import multer from 'multer';
 import { requireAuth, requirePermission, requireRole, requireAnyRole, protectCriticalFields, auditLog, enforceSoftDelete, AuthenticatedRequest } from './rbacMiddleware';
 import { getFirestoreAdmin, getAuthAdmin, setCustomUserClaims, forceTokenRefresh } from './backendAuth';
 import { FieldValue } from 'firebase-admin/firestore';
 import { ROLE_PERMISSIONS, UserRole, FINANCEIRO_PROTECTED_FIELDS } from '../types';
+
+const upload = multer({ dest: 'uploads/' });
 
 dotenv.config();
 
@@ -1302,11 +1305,13 @@ app.get('/api/pagamentos', requireAuth, requirePermission('Visualizar'), async (
     let query: any = dbAdmin.collection('financeiro/pagamentos')
       .where('empresaId', '==', currentEmpresaId);
 
-    const { startDate, endDate, duplicataId, conciliado } = req.query;
+    const { startDate, endDate, duplicataId, conciliado, clienteNome, status, formaPagamento } = req.query;
     if (startDate) query = query.where('dataPagamento', '>=', String(startDate));
     if (endDate) query = query.where('dataPagamento', '<=', String(endDate));
     if (duplicataId) query = query.where('duplicataId', '==', String(duplicataId));
     if (conciliado !== undefined) query = query.where('conciliado', '==', conciliado === 'true');
+    if (status) query = query.where('status', '==', String(status));
+    if (formaPagamento) query = query.where('formaPagamento', '==', String(formaPagamento));
 
     const snapshot = await query.get();
     const pagamentos: any[] = [];
@@ -1382,6 +1387,23 @@ app.post('/api/pagamentos', requireAuth, requirePermission('Criar'), async (req:
       await dbAdmin.collection('financeiro/duplicatas').doc(duplicataId).update({ status: 'Pago' }).catch(() => {});
     }
 
+    // Auto-registrar entrada no caixa
+    await dbAdmin.collection('financeiro/caixa/movimentos').add({
+      tipo: 'entrada',
+      categoria: 'Recebimento Duplicata',
+      descricao: `Pagamento duplicata ${duplicataNumero} - ${clienteNome}`,
+      valor: Number(valorPago),
+      operadorId: req.user!.uid,
+      operadorNome: req.user!.nome || 'Operador',
+      dataMovimento: dataPagamento,
+      empresaId: currentEmpresaId,
+      createdAt: new Date().toISOString(),
+      status: 'ativo',
+      createdBy: req.user!.uid,
+      createdByName: req.user!.nome || 'Operador',
+      pagamentoId: docRef.id
+    }).catch(() => {});
+
     await logAudit(dbAdmin, req, 'pagamentos', docRef.id, 'REGISTRAR_PAGAMENTO', null, newPagamento);
 
     res.json({ success: true, id: docRef.id });
@@ -1429,6 +1451,244 @@ app.post('/api/pagamentos/:id/conciliar', requireAuth, requirePermission('Aprova
     await logAudit(dbAdmin, req, 'pagamentos', id, 'CONCILIAR_PAGAMENTO', currentData, { conciliado: true });
 
     res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Upload de comprovante de pagamento
+app.post('/api/pagamentos/:id/comprovante', requireAuth, requirePermission('Editar'), upload.single('comprovante'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    if (req.user?.isDemo) {
+      return res.json({ success: true, comprovanteUrl: 'https://via.placeholder.com/150' });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const docRef = dbAdmin.collection('financeiro/pagamentos').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: 'Pagamento não encontrado.' });
+    }
+
+    const currentData = docSnap.data();
+    if (currentData?.empresaId !== req.user!.empresaId) {
+      return res.status(403).json({ error: 'Acesso negado.' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+    }
+
+    // Gerar URL local do comprovante
+    const comprovanteUrl = `/uploads/${req.file.filename}`;
+
+    await docRef.update({
+      comprovanteUrl,
+      comprovantePath: req.file.path
+    });
+
+    await logAudit(dbAdmin, req, 'pagamentos', id, 'UPLOAD_COMPROVANTE', currentData, { comprovanteUrl });
+
+    res.json({ success: true, comprovanteUrl });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Baixa manual de pagamento
+app.put('/api/pagamentos/:id/baixa', requireAuth, requirePermission('Aprovar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { observacoes } = req.body;
+
+    if (req.user?.isDemo) {
+      return res.json({ success: true });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const docRef = dbAdmin.collection('financeiro/pagamentos').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: 'Pagamento não encontrado.' });
+    }
+
+    const currentData = docSnap.data();
+    if (currentData?.empresaId !== req.user!.empresaId) {
+      return res.status(403).json({ error: 'Acesso negado.' });
+    }
+
+    if (currentData?.status === 'estornado') {
+      return res.status(400).json({ error: 'Não é possível dar baixa em um pagamento estornado.' });
+    }
+
+    const updates: any = {
+      baixado: true,
+      baixadoPor: req.user!.uid,
+      baixadoEm: new Date().toISOString(),
+      baixadoNome: req.user!.nome || 'Operador'
+    };
+    if (observacoes) updates.observacoesBaixa = observacoes;
+
+    await docRef.update(updates);
+
+    await logAudit(dbAdmin, req, 'pagamentos', id, 'BAIXA_MANUAL', currentData, updates);
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Estorno de pagamento
+app.post('/api/pagamentos/:id/estorno', requireAuth, requirePermission('Aprovar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { motivo } = req.body;
+
+    if (req.user?.isDemo) {
+      return res.json({ success: true });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const docRef = dbAdmin.collection('financeiro/pagamentos').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      return res.status(404).json({ error: 'Pagamento não encontrado.' });
+    }
+
+    const currentData = docSnap.data();
+    if (currentData?.empresaId !== req.user!.empresaId) {
+      return res.status(403).json({ error: 'Acesso negado.' });
+    }
+
+    if (currentData?.status === 'estornado') {
+      return res.status(400).json({ error: 'Este pagamento já foi estornado.' });
+    }
+
+    // Marcar pagamento como estornado
+    await docRef.update({
+      status: 'estornado',
+      estornadoPor: req.user!.uid,
+      estornadoEm: new Date().toISOString(),
+      motivoEstorno: motivo || 'Sem motivo informado'
+    });
+
+    // Reverter duplicata para Pendente (ou Vencido se aplicável)
+    if (currentData?.duplicataId) {
+      const dupRef = dbAdmin.collection('financeiro/duplicatas').doc(currentData.duplicataId);
+      const dupSnap = await dupRef.get();
+      if (dupSnap.exists) {
+        const dupData = dupSnap.data();
+        if (dupData?.status === 'Pago') {
+          const hoje = new Date().toISOString().split('T')[0];
+          const novoStatus = dupData.vencimento && dupData.vencimento < hoje ? 'Vencido' : 'Pendente';
+          await dupRef.update({ status: novoStatus }).catch(() => {});
+        }
+      }
+    }
+
+    // Registrar saída no caixa (estorno)
+    await dbAdmin.collection('financeiro/caixa/movimentos').add({
+      tipo: 'saida',
+      categoria: 'Estorno Pagamento',
+      descricao: `Estorno pagamento duplicata ${currentData?.duplicataNumero || ''} - ${currentData?.clienteNome || ''}`,
+      valor: Number(currentData?.valorPago || 0),
+      operadorId: req.user!.uid,
+      operadorNome: req.user!.nome || 'Operador',
+      dataMovimento: new Date().toISOString().split('T')[0],
+      empresaId: req.user!.empresaId || 'empresa-default',
+      createdAt: new Date().toISOString(),
+      status: 'ativo',
+      createdBy: req.user!.uid,
+      createdByName: req.user!.nome || 'Operador',
+      pagamentoId: id
+    }).catch(() => {});
+
+    await logAudit(dbAdmin, req, 'pagamentos', id, 'ESTORNAR_PAGAMENTO', currentData, { status: 'estornado', motivo });
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar pagamentos por duplicata
+app.get('/api/pagamentos/duplicata/:duplicataId', requireAuth, requirePermission('Visualizar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { duplicataId } = req.params;
+
+    if (req.user?.isDemo) {
+      return res.json({ pagamentos: [] });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const currentEmpresaId = req.user!.empresaId || 'empresa-default';
+    const snapshot = await dbAdmin.collection('financeiro/pagamentos')
+      .where('empresaId', '==', currentEmpresaId)
+      .where('duplicataId', '==', duplicataId)
+      .get();
+
+    const pagamentos: any[] = [];
+    snapshot.forEach((doc: any) => {
+      pagamentos.push({ id: doc.id, ...doc.data() });
+    });
+
+    pagamentos.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    res.json({ pagamentos });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Listar pagamentos por cliente
+app.get('/api/pagamentos/cliente/:clienteId', requireAuth, requirePermission('Visualizar'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { clienteId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    if (req.user?.isDemo) {
+      return res.json({ pagamentos: [] });
+    }
+
+    const dbAdmin = getFirestoreAdmin();
+    if (!dbAdmin) {
+      return res.status(500).json({ error: 'Firebase Admin não configurado.' });
+    }
+
+    const currentEmpresaId = req.user!.empresaId || 'empresa-default';
+    let query: any = dbAdmin.collection('financeiro/pagamentos')
+      .where('empresaId', '==', currentEmpresaId)
+      .where('clienteId', '==', clienteId);
+
+    if (startDate) query = query.where('dataPagamento', '>=', String(startDate));
+    if (endDate) query = query.where('dataPagamento', '<=', String(endDate));
+
+    const snapshot = await query.get();
+    const pagamentos: any[] = [];
+    snapshot.forEach((doc: any) => {
+      pagamentos.push({ id: doc.id, ...doc.data() });
+    });
+
+    pagamentos.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    res.json({ pagamentos });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
